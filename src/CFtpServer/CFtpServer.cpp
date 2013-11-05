@@ -951,7 +951,7 @@ bool CFtpServer::CClientEntry::CheckPrivileges( unsigned char ucPriv ) const
 				if( !strcmp( pszCmdArg, "F" ) ) {
 					pClient->SendReply( "200 STRU Command Successful." );
 				} else
-					pClient->SendReply( "504 STRU failled. Parametre not implemented" );
+					pClient->SendReply("504 STRU failed. Parameter not implemented");
 			} else
 				pClient->SendReply( "501 Invalid number of arguments." );
 			continue;

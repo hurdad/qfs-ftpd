@@ -97,6 +97,8 @@
 	//QFS Client Library Headers
 	#include "kfs/KfsClient.h"
 	#include "kfs/KfsAttr.h"
+	#include <string>
+
 
 /**
  * @brief CFtpServer class
@@ -351,7 +353,7 @@ class CFtpServer
 		 * @param  sHost   the hostname/ip address
 		 */
 		void SetQFSMetaserverHost(std::string sHost){
-				cQFSMetaserverHost = sHost.c_str();
+				sQFSMetaserverHost = sHost;
 		}
 
 		/**
@@ -369,8 +371,8 @@ class CFtpServer
 		 *
 		 * @return  the hostname/ip address
 		 */
-		const char* GetQFSMetaserverHost(){
-			return cQFSMetaserverHost;
+		std::string GetQFSMetaserverHost(){
+			return sQFSMetaserverHost;
 		}
 
 		/**
@@ -696,7 +698,7 @@ class CFtpServer
 		bool bEnableFXP;
 
 		// QFS Connection
-		const char* cQFSMetaserverHost;
+		std::string sQFSMetaserverHost;
 		unsigned short usQFSMetaserverPort;
 };
 

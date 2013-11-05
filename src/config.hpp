@@ -2,10 +2,13 @@
 #define CONFIG_HPP_
 #include "libconfig.h++"
 #include <iostream>
+#include <string>
 
 namespace ftpd_server {
 
+using namespace std;
 using namespace libconfig;
+
 
 config server;
 
@@ -47,10 +50,22 @@ void LoadServerConfig(const char * configFile) {
 		exit (EXIT_FAILURE);
 	}
 
-	cfg.lookupValue("ListeningIP", server.ListeningIP);
+	//
+	// Parse Config
+	//
+	string ListeningIP = server.ListeningIP;
+	cfg.lookupValue("ListeningIP", ListeningIP);
+	server.ListeningIP = ListeningIP;
 	int ListeningPort = server.ListeningPort;
 	cfg.lookupValue("ListeningPort", ListeningPort);
 	server.ListeningPort = ListeningPort;
+
+	string QFSMetaserverHost = server.QFSMetaserverHost;
+	cfg.lookupValue("QFSMetaserverHost", QFSMetaserverHost);
+	server.QFSMetaserverHost = QFSMetaserverHost;
+	int QFSMetaserverPort = server.QFSMetaserverPort;
+	cfg.lookupValue("QFSMetaserverPort", QFSMetaserverPort);
+	server.QFSMetaserverPort = QFSMetaserverPort;
 
 	int Start = server.DataPortRange.usStart;
 	int Len = server.DataPortRange.usLen;
@@ -59,8 +74,13 @@ void LoadServerConfig(const char * configFile) {
 	server.DataPortRange.usStart = Start;
 	server.DataPortRange.usLen = Len;
 
-	cfg.lookupValue("EnableFXP", server.EnableFXP);
-	cfg.lookupValue("MaxPasswordTries", server.MaxPasswordTries);
+	bool EnableFXP = server.EnableFXP;
+	cfg.lookupValue("EnableFXP", EnableFXP);
+	server.EnableFXP = EnableFXP;
+
+	unsigned int MaxPasswordTries = server.MaxPasswordTries;
+	cfg.lookupValue("MaxPasswordTries", MaxPasswordTries);
+	server.MaxPasswordTries = MaxPasswordTries;
 
 	int NoLoginTimeout = server.NoLoginTimeout;
 	int NoTransferTimeout = server.NoTransferTimeout;
