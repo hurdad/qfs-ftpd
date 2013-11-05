@@ -1,3 +1,2 @@
-bin_PROGRAMS=a.out
-a_out_SOURCES=autotools.cpp
-
+bin_PROGRAMS=qfsftpd
+qfsftpd_SOURCES=main.cpp CFtpServer/CFtpServer.cpp
