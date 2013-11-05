@@ -94,6 +94,9 @@
 	#define INADDR_ANY	((unsigned long int) 0x00000000)
 #endif
 
+	//QFS Client Library Headers
+	#include "kfs/KfsClient.h"
+	#include "kfs/KfsAttr.h"
 
 /**
  * @brief CFtpServer class
@@ -338,6 +341,49 @@ class CFtpServer
 		#endif
 
 		////////////////////////////////////////
+		// QFS Connection Configuration
+		////////////////////////////////////////
+
+		/**
+		 * Set the QFS Metaserver Host
+		 * Default: 'localhost'
+		 *
+		 * @param  sHost   the hostname/ip address
+		 */
+		void SetQFSMetaserverHost(std::string sHost){
+				cQFSMetaserverHost = sHost.c_str();
+		}
+
+		/**
+		 * Set the QFS Metaserver Port
+		 * Default: 20000
+		 *
+		 * @param  usPort   the port number.
+		 */
+		void SetQFSMetaserverPort(unsigned short usPort){
+				usQFSMetaserverPort = usPort;
+		}
+
+		/**
+		 * Get the QFS Metaserver Host
+		 *
+		 * @return  the hostname/ip address
+		 */
+		const char* GetQFSMetaserverHost(){
+			return cQFSMetaserverHost;
+		}
+
+		/**
+		 * Get the QFS Metaserver Port
+		 *
+	 	 * @return  the port number
+		 */
+		unsigned short GetQFSMetaserverPort(){
+			return usQFSMetaserverPort;
+		}
+
+
+		////////////////////////////////////////
 		// STATISTICS
 		////////////////////////////////////////
 
@@ -391,7 +437,8 @@ class CFtpServer
 			MEM_ERROR,
 			THREAD_ERROR,
 			ZLIB_VERSION_ERROR,
-			ZLIB_STREAM_ERROR
+			ZLIB_STREAM_ERROR,
+			QFS_CONNECT_ERROR
 		};
 
 		#ifdef CFTPSERVER_ENABLE_EVENTS
@@ -647,6 +694,10 @@ class CFtpServer
 			bool bEnableZlib;
 		#endif
 		bool bEnableFXP;
+
+		// QFS Connection
+		const char* cQFSMetaserverHost;
+		unsigned short usQFSMetaserverPort;
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -1082,6 +1133,8 @@ class CFtpServer::CClientEntry
 
 		bool bIsCtrlCanalOpen;
 		class CFtpServer *pFtpServer;
+
+		KFS::KfsClient *gKfsClient; //QFS Connection
 
 		/**
 		 * Send a reply to the Client.

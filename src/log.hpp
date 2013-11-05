@@ -75,6 +75,11 @@ public:
 
 			break;
 
+		case CFtpServer::QFS_CONNECT_ERROR:
+			log << ts << " - Warning, unable to connect to QFS Cluster !\r\n";
+
+			break;
+
 		}
 
 		log.close();

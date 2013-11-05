@@ -5,6 +5,8 @@ struct config {
 
         std::string ListeningIP;
         unsigned short int ListeningPort;
+        std::string QFSMetaserverHost;
+        unsigned short int QFSMetaserverPort;
         struct {
                 unsigned short int usLen, usStart;
         } DataPortRange;

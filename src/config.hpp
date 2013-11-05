@@ -11,8 +11,10 @@ config server;
 
 void InitServerConfig() {
 
-	server.ListeningIP = "0.0.0.0"; //Listening Interface
-	server.ListeningPort = 21; // By default, the FTP control port is 21
+	server.ListeningIP = "0.0.0.0"; // FTP Listening Interface
+	server.ListeningPort = 2100; // By default, the FTP control port is 21
+	server.QFSMetaserverHost = "localhost"; //QFS Cluster's Metaserver Hostname
+	server.QFSMetaserverPort = 20000; // QFS Cluster Meteaserver Port
 	server.CheckPassDelay = 500; // milliseconds. Bruteforcing protection.
 	server.DataPortRange.usStart = 100; // TCP Ports [100;999].
 	server.DataPortRange.usLen = 900;

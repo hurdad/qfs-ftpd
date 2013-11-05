@@ -49,12 +49,15 @@ int main(int argc, char * argv[]) {
 	FtpServer.SetMaxPasswordTries(server.MaxPasswordTries);
 	FtpServer.SetNoLoginTimeout(server.NoLoginTimeout); // seconds
 	FtpServer.SetNoTransferTimeout(server.NoTransferTimeout); // seconds
-	FtpServer.SetDataPortRange(server.DataPortRange.usStart,
-			server.DataPortRange.usLen); // data TCP-Port range = [100-999]
+	FtpServer.SetDataPortRange(server.DataPortRange.usStart, server.DataPortRange.usLen); // data TCP-Port range = [100-999]
 	FtpServer.SetCheckPassDelay(server.CheckPassDelay); // milliseconds. Bruteforcing protection.
 	FtpServer.SetTransferBufferSize(server.TransferBufferSize);
 	FtpServer.SetTransferSocketBufferSize(server.TransferSocketBufferSize);
 	FtpServer.EnableFXP(server.EnableFXP);
+
+	//set qfs connection
+	FtpServer.SetQFSMetaserverHost(server.QFSMetaserverHost);
+	FtpServer.SetQFSMetaserverPort(server.QFSMetaserverPort);
 
 #ifdef CFTPSERVER_ENABLE_ZLIB
 	FtpServer.EnableModeZ( true );

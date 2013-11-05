@@ -615,6 +615,13 @@ CFtpServer::CClientEntry *CFtpServer::AddClient( SOCKET Sock, struct sockaddr_in
 			pClient->ClientLock.Initialize();
 			++uiNumberOfClient;
 
+			//connect to QFS
+			pClient->gKfsClient = KFS::Connect(GetQFSMetaserverHost(), GetQFSMetaserverPort());
+			if (!pClient->gKfsClient) {
+				OnServerEventCb(QFS_CONNECT_ERROR);
+				return NULL;
+			}
+
 			OnClientEventCb( NEW_CLIENT, pClient );
 
 			return pClient;
@@ -748,7 +755,12 @@ CFtpServer::CClientEntry::~CClientEntry()
 		if( pFtpServer->pFirstClient == this ) pFtpServer->pFirstClient = pNextClient;
 		if( pFtpServer->pLastClient == this ) pFtpServer->pLastClient = pPrevClient;
 	}
+
+	delete gKfsClient;
+	gKfsClient = NULL;
+
 	ClientLock.Destroy();
+
 }
 
 bool CFtpServer::CClientEntry::InitDelete()
@@ -841,6 +853,7 @@ bool CFtpServer::CClientEntry::CheckPrivileges( unsigned char ucPriv ) const
 					pClient->pUser = pFtpServer->SearchUserFromLogin( pszCmdArg );
 					if( pClient->pUser && pClient->pUser->bIsEnabled && !*pClient->pUser->szPassword ) {
 						pClient->LogIn();
+
 					} else
 						pClient->SendReply( "331 Password required for this user." );
 				}
