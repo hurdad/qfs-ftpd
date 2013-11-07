@@ -45,20 +45,21 @@ int main(int argc, char * argv[]) {
 	FtpServer.SetUserCallback(Log::OnUserEvent);
 	FtpServer.SetClientCallback(Log::OnClientEvent);
 
+/*
+	//set qfs connection
+	FtpServer.SetQFSConnectionConfig(server.QFSMetaServerHost, server.QFSMetaServerPort, server.QFSRootPath);
+
+
 	//configuration
 	FtpServer.SetMaxPasswordTries(server.MaxPasswordTries);
 	FtpServer.SetNoLoginTimeout(server.NoLoginTimeout); // seconds
 	FtpServer.SetNoTransferTimeout(server.NoTransferTimeout); // seconds
-//	FtpServer.SetDataPortRange(server.DataPortRange.usStart, server.DataPortRange.usLen); // data TCP-Port range = [100-999]
+	FtpServer.SetDataPortRange(server.DataPortRange.usStart, server.DataPortRange.usLen); // data TCP-Port range = [100-999]
 	FtpServer.SetCheckPassDelay(server.CheckPassDelay); // milliseconds. Bruteforcing protection.
 	FtpServer.SetTransferBufferSize(server.TransferBufferSize);
 	FtpServer.SetTransferSocketBufferSize(server.TransferSocketBufferSize);
 	FtpServer.EnableFXP(server.EnableFXP);
-
-	//set qfs connection
-	FtpServer.SetQFSMetaserverHost(server.QFSMetaserverHost);
-	FtpServer.SetQFSMetaserverPort(server.QFSMetaserverPort);
-
+*/
 #ifdef CFTPSERVER_ENABLE_ZLIB
 	FtpServer.EnableModeZ( true );
 #endif
@@ -68,6 +69,14 @@ int main(int argc, char * argv[]) {
 	// Security Warning ! Only here for example.
 	// the last command allow the user to call the 'system()' C function!
 #endif
+
+	//Add anonymous user
+	CFtpServer::CUserEntry *pAnonymousUser = FtpServer.AddUser( "anonymous", NULL, "/" );
+	if( pAnonymousUser ) {
+		printf( "-Anonymous user successfully created.\r\n" );
+		pAnonymousUser->SetPrivileges( CFtpServer::LIST | CFtpServer::READFILE );
+	} else
+		printf( "-Can't create anonymous user.\r\n" );
 
 	//Start listening
 	if (FtpServer.StartListening(inet_addr(server.ListeningIP.c_str()),

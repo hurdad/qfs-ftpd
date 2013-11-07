@@ -5,8 +5,6 @@ struct config {
 
         std::string ListeningIP;
         unsigned short int ListeningPort;
-        std::string QFSMetaserverHost;
-        unsigned short int QFSMetaserverPort;
         struct {
                 unsigned short int usLen, usStart;
         } DataPortRange;
@@ -21,10 +19,16 @@ struct config {
 #endif
 
         bool EnableFXP;
+
+        std::string QFSMetaServerHost;
+		int QFSMetaServerPort;
+		std::string QFSRootPath;
+
         std::string LogDirectory;
         bool EnableUserLogging;
         bool EnableClientLogging;
         bool EnableServerLogging;
+
 };
 
 #endif /* MAIN_H_ */

@@ -9,15 +9,15 @@ namespace ftpd_server {
 using namespace std;
 using namespace libconfig;
 
-
 config server;
 
 void InitServerConfig() {
 
 	server.ListeningIP = "0.0.0.0"; // FTP Listening Interface
 	server.ListeningPort = 2100; // By default, the FTP control port is 21
-	server.QFSMetaserverHost = "localhost"; //QFS Cluster's Metaserver Hostname
-	server.QFSMetaserverPort = 20000; // QFS Cluster Meteaserver Port
+	server.QFSMetaServerHost = "localhost"; //QFS Cluster's Metaserver Hostname
+	server.QFSMetaServerPort = 20000; // QFS Cluster Meteaserver Port
+	server.QFSRootPath = "/";  //QFS FTP Root Path
 	server.CheckPassDelay = 500; // milliseconds. Bruteforcing protection.
 	server.DataPortRange.usStart = 100; // TCP Ports [100;999].
 	server.DataPortRange.usLen = 900;
@@ -60,12 +60,15 @@ void LoadServerConfig(const char * configFile) {
 	cfg.lookupValue("ListeningPort", ListeningPort);
 	server.ListeningPort = ListeningPort;
 
-	string QFSMetaserverHost = server.QFSMetaserverHost;
-	cfg.lookupValue("QFSMetaserverHost", QFSMetaserverHost);
-	server.QFSMetaserverHost = QFSMetaserverHost;
-	int QFSMetaserverPort = server.QFSMetaserverPort;
-	cfg.lookupValue("QFSMetaserverPort", QFSMetaserverPort);
-	server.QFSMetaserverPort = QFSMetaserverPort;
+	string QFSMetaServerHost = server.QFSMetaServerHost;
+	cfg.lookupValue("QFS.MetaServerHost",  QFSMetaServerHost);
+	server.QFSMetaServerHost = QFSMetaServerHost;
+	int QFSMetaServerPort = server.QFSMetaServerPort;
+	cfg.lookupValue("QFS.MetaServerPort", QFSMetaServerPort);
+	server.QFSMetaServerPort = QFSMetaServerPort;
+	string QFSRootPath = server.QFSRootPath;
+	cfg.lookupValue("QFS.RootPath", server.QFSRootPath);
+	server.QFSRootPath = QFSRootPath;
 
 	int Start = server.DataPortRange.usStart;
 	int Len = server.DataPortRange.usLen;
