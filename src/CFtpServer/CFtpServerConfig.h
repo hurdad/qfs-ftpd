@@ -35,22 +35,16 @@
 //#define CFTPSERVER_ENABLE_EXTRACMD
 
 /**
- * @def  CFTPSERVER_ENABLE_EVENTS
- * Enable or disable events.
- */
-#define CFTPSERVER_ENABLE_EVENTS
-
-/**
  * @def  CFTPSERVER_ENABLE_ZLIB
  * Enable or disable data transfer compression support using the Zlib library.
  */
-//#define CFTPSERVER_ENABLE_ZLIB
+#define CFTPSERVER_ENABLE_ZLIB
 
 /**
  * @def  CFTPSERVER_ZLIB_H_PATH
  * Define the path to the Zlib header file.
  */
-//#define CFTPSERVER_ZLIB_H_PATH		"zlib.h"
+#define CFTPSERVER_ZLIB_H_PATH		"zlib.h"
 
 /**
  * @def  CFTPSERVER_ENABLE_IPV6

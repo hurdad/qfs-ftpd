@@ -45,10 +45,8 @@ int main(int argc, char * argv[]) {
 	FtpServer.SetUserCallback(Log::OnUserEvent);
 	FtpServer.SetClientCallback(Log::OnClientEvent);
 
-/*
 	//set qfs connection
 	FtpServer.SetQFSConnectionConfig(server.QFSMetaServerHost, server.QFSMetaServerPort, server.QFSRootPath);
-
 
 	//configuration
 	FtpServer.SetMaxPasswordTries(server.MaxPasswordTries);
@@ -59,7 +57,7 @@ int main(int argc, char * argv[]) {
 	FtpServer.SetTransferBufferSize(server.TransferBufferSize);
 	FtpServer.SetTransferSocketBufferSize(server.TransferSocketBufferSize);
 	FtpServer.EnableFXP(server.EnableFXP);
-*/
+
 #ifdef CFTPSERVER_ENABLE_ZLIB
 	FtpServer.EnableModeZ( true );
 #endif

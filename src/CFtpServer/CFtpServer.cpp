@@ -91,11 +91,9 @@ CFtpServer::CFtpServer(void) {
 	uAcceptingThreadID = 0;
 #endif
 
-#ifdef CFTPSERVER_ENABLE_EVENTS
 	_OnUserEventCb = NULL;
 	_OnClientEventCb = NULL;
 	_OnServerEventCb = NULL;
-#endif
 
 #ifdef CFTPSERVER_ENABLE_ZLIB
 	bEnableZlib = false;
@@ -981,16 +979,17 @@ void *CFtpServer::CClientEntry::Shell(void *pvParam)
 
 			if (pszCmdArg) {
 #ifdef CFTPSERVER_ENABLE_ZLIB
-				if( !strncasecmp( pszCmdArg, "mode z level ", 13 ) ) {
-					int iLevel = atoi( pszCmdArg + 13 );
-					if( iLevel > 0 && iLevel <= 9 ) {
+				if (!strncasecmp(pszCmdArg, "mode z level ", 13)) {
+					int iLevel = atoi(pszCmdArg + 13);
+					if (iLevel > 0 && iLevel <= 9) {
 						pClient->iZlibLevel = iLevel;
-						pClient->SendReply( "200 MODE Z LEVEL successfully set." );
+						pClient->SendReply(
+								"200 MODE Z LEVEL successfully set.");
 					} else
-					pClient->SendReply( "501 Invalid MODE Z LEVEL value." );
+						pClient->SendReply("501 Invalid MODE Z LEVEL value.");
 				} else
 #endif
-				pClient->SendReply("501 Option not understood.");
+					pClient->SendReply("501 Option not understood.");
 			} else
 				pClient->SendReply("501 Invalid number of arguments.");
 			continue;
@@ -1002,12 +1001,12 @@ void *CFtpServer::CClientEntry::Shell(void *pvParam)
 					pClient->eDataMode = STREAM;
 					pClient->SendReply("200 MODE set to S.");
 #ifdef CFTPSERVER_ENABLE_ZLIB
-				} else if( !strcmp( pszCmdArg, "Z" ) ) {
-					if( pFtpServer->IsModeZEnabled() ) {
+				} else if (!strcmp(pszCmdArg, "Z")) {
+					if (pFtpServer->IsModeZEnabled()) {
 						pClient->eDataMode = ZLIB;
-						pClient->SendReply( "200 MODE set to Z." );
+						pClient->SendReply("200 MODE set to Z.");
 					} else
-					pClient->SendReply( "504 MODE Z disabled." );
+						pClient->SendReply("504 MODE Z disabled.");
 #else
 				} else if (!strcmp(pszCmdArg, "Z")) {
 					pClient->SendReply("502 MODE Z non-implemented.");
@@ -1038,15 +1037,15 @@ void *CFtpServer::CClientEntry::Shell(void *pvParam)
 		} else if (nCmd == CMD_FEAT) {
 
 #ifdef CFTPSERVER_ENABLE_ZLIB
-			char szFeat[ 73 ] = "211-Features:\r\n"
-			" CLNT\r\n"
-			" MDTM\r\n";
-			if( pFtpServer->IsModeZEnabled() )
-			strcat( szFeat, " MODE Z\r\n" );
-			strcat( szFeat, " REST STREAM\r\n"
+			char szFeat[73] = "211-Features:\r\n"
+					" CLNT\r\n"
+					" MDTM\r\n";
+			if (pFtpServer->IsModeZEnabled())
+				strcat(szFeat, " MODE Z\r\n");
+			strcat(szFeat, " REST STREAM\r\n"
 					" SIZE\r\n"
-					"211 End" );
-			pClient->SendReply( szFeat );
+					"211 End");
+			pClient->SendReply(szFeat);
 #else
 			pClient->SendReply("211-Features:\r\n"
 					" CLNT\r\n"
@@ -1113,8 +1112,7 @@ void *CFtpServer::CClientEntry::Shell(void *pvParam)
 				if (pClient->DataSock != INVALID_SOCKET
 #ifndef WIN32
 						&& setsockopt(pClient->DataSock, SOL_SOCKET,
-								SO_REUSEADDR, (char *) &on, sizeof(on))
-								!= SOCKET_ERROR
+						SO_REUSEADDR, (char *) &on, sizeof(on)) != SOCKET_ERROR
 #endif
 				) {
 					pClient->usDataPort = 0;
@@ -2138,37 +2136,36 @@ bool CFtpServer::CClientEntry::ResetDataConnection(bool bSyncWait /* =true */) {
 ////////////////////////////////////////
 
 #ifdef CFTPSERVER_ENABLE_ZLIB
-bool CFtpServer::CClientEntry::InitZlib( DataTransfer_t *pTransfer )
-{
+bool CFtpServer::CClientEntry::InitZlib(DataTransfer_t *pTransfer) {
 	int nRet;
 	pTransfer->zStream.zfree = Z_NULL;
 	pTransfer->zStream.zalloc = Z_NULL;
 	pTransfer->zStream.opaque = Z_NULL;
 	CFtpServer *pFtpServer = pTransfer->pClient->pFtpServer;
 
-	switch( pTransfer->pClient->eStatus ) {
-		case LISTING:
-		case DOWNLOADING:
-		nRet = deflateInit( &pTransfer->zStream, pTransfer->iZlibLevel );
-		if( nRet == Z_OK )
-		return true;
+	switch (pTransfer->pClient->eStatus) {
+	case LISTING:
+	case DOWNLOADING:
+		nRet = deflateInit(&pTransfer->zStream, pTransfer->iZlibLevel);
+		if (nRet == Z_OK)
+			return true;
 		break;
-		case UPLOADING:
-		nRet = inflateInit( &pTransfer->zStream );
-		if( nRet == Z_OK )
-		return true;
+	case UPLOADING:
+		nRet = inflateInit(&pTransfer->zStream);
+		if (nRet == Z_OK)
+			return true;
 		break;
 	}
 
-	switch( nRet ) {
-		case Z_MEM_ERROR:
-		pFtpServer->OnServerEventCb( MEM_ERROR );
+	switch (nRet) {
+	case Z_MEM_ERROR:
+		pFtpServer->OnServerEventCb(MEM_ERROR);
 		break;
-		case Z_VERSION_ERROR:
-		pFtpServer->OnServerEventCb( ZLIB_VERSION_ERROR );
+	case Z_VERSION_ERROR:
+		pFtpServer->OnServerEventCb(ZLIB_VERSION_ERROR);
 		break;
-		case Z_STREAM_ERROR:
-		pFtpServer->OnServerEventCb( ZLIB_STREAM_ERROR );
+	case Z_STREAM_ERROR:
+		pFtpServer->OnServerEventCb(ZLIB_STREAM_ERROR);
 		break;
 	}
 	return false;
@@ -2211,14 +2208,14 @@ void* CFtpServer::CClientEntry::StoreThread(void *pvParam)
 #ifdef CFTPSERVER_ENABLE_ZLIB
 	int nFlush, nRet;
 	char *pOutBuffer = NULL;
-	if( pTransfer->eDataMode == ZLIB ) {
-		pOutBuffer = new char[ uiBufferSize ];
-		if( !pOutBuffer || !pBuffer ) {
-			pFtpServer->OnServerEventCb( MEM_ERROR );
+	if (pTransfer->eDataMode == ZLIB) {
+		pOutBuffer = new char[uiBufferSize];
+		if (!pOutBuffer || !pBuffer) {
+			pFtpServer->OnServerEventCb(MEM_ERROR);
 			goto endofstore;
 		}
-		if( !pClient->InitZlib( pTransfer ) )
-		goto endofstore;
+		if (!pClient->InitZlib(pTransfer))
+			goto endofstore;
 		pTransfer->zStream.next_out = (Bytef*) pOutBuffer;
 		pTransfer->zStream.avail_out = uiBufferSize;
 	}
@@ -2245,33 +2242,37 @@ void* CFtpServer::CClientEntry::StoreThread(void *pvParam)
 				FD_SET(pClient->DataSock, &fdRead);
 
 				if (select(pClient->DataSock + 1, &fdRead, NULL, NULL, NULL)
-						> 0 && FD_ISSET( pClient->DataSock, &fdRead )) {
+						> 0&& FD_ISSET( pClient->DataSock, &fdRead )) {
 					len = recv(pClient->DataSock, ps, (pe - ps), 0);
 					if (len >= 0) {
 
 #ifdef CFTPSERVER_ENABLE_ZLIB
-						if( pTransfer->eDataMode == ZLIB ) {
+						if (pTransfer->eDataMode == ZLIB) {
 							pTransfer->zStream.avail_in = len;
 							pTransfer->zStream.next_in = (Bytef*) pBuffer;
 							nFlush = !len ? Z_NO_FLUSH : Z_FINISH;
-							do
-							{
-								nRet = inflate( &pTransfer->zStream, nFlush );
-								if( nRet != Z_OK && nRet != Z_STREAM_END && nRet != Z_BUF_ERROR )
-								break; // Zlib error
-								if( len == 0 && nRet == Z_BUF_ERROR )
-								break;// transfer has been interrupt by the client.
-								if( pTransfer->zStream.avail_out == 0 || nRet == Z_STREAM_END ) {
-									if( !pClient->SafeWrite( hFile, pOutBuffer, uiBufferSize - pTransfer->zStream.avail_out) ) {
+							do {
+								nRet = inflate(&pTransfer->zStream, nFlush);
+								if (nRet != Z_OK && nRet != Z_STREAM_END
+										&& nRet != Z_BUF_ERROR)
+									break; // Zlib error
+								if (len == 0 && nRet == Z_BUF_ERROR)
+									break; // transfer has been interrupt by the client.
+								if (pTransfer->zStream.avail_out
+										== 0|| nRet == Z_STREAM_END) {
+									if (!pClient->SafeWrite(hFile, pOutBuffer,
+											uiBufferSize
+													- pTransfer->zStream.avail_out)) {
 										len = -1;
 										break; // write error
 									}
-									pTransfer->zStream.next_out = (Bytef*) pOutBuffer;
+									pTransfer->zStream.next_out =
+											(Bytef*) pOutBuffer;
 									pTransfer->zStream.avail_out = uiBufferSize;
 								}
-							}while( pTransfer->zStream.avail_in != 0 );
-							if( nRet == Z_STREAM_END )
-							break;
+							} while (pTransfer->zStream.avail_in != 0);
+							if (nRet == Z_STREAM_END)
+								break;
 						} else
 #endif
 						if (len > 0) {
@@ -2303,9 +2304,10 @@ void* CFtpServer::CClientEntry::StoreThread(void *pvParam)
 	endofstore: if (pBuffer)
 		delete[] pBuffer;
 #ifdef CFTPSERVER_ENABLE_ZLIB
-	if( pTransfer->eDataMode == ZLIB ) {
-		deflateEnd( &pTransfer->zStream );
-		if( pOutBuffer ) delete [] pOutBuffer;
+	if (pTransfer->eDataMode == ZLIB) {
+		deflateEnd(&pTransfer->zStream);
+		if (pOutBuffer)
+			delete[] pOutBuffer;
 	}
 #endif
 
@@ -2353,14 +2355,14 @@ void* CFtpServer::CClientEntry::RetrieveThread(void *pvParam)
 #ifdef CFTPSERVER_ENABLE_ZLIB
 	int nFlush, nRet;
 	char *pOutBuffer = NULL;
-	if( pTransfer->eDataMode == ZLIB ) {
-		pOutBuffer = new char[ uiBufferSize ];
-		if( !pOutBuffer || !pBuffer ) {
-			pFtpServer->OnServerEventCb( MEM_ERROR );
+	if (pTransfer->eDataMode == ZLIB) {
+		pOutBuffer = new char[uiBufferSize];
+		if (!pOutBuffer || !pBuffer) {
+			pFtpServer->OnServerEventCb(MEM_ERROR);
 			goto endofretrieve;
 		}
-		if( !pClient->InitZlib( pTransfer ) )
-		goto endofretrieve;
+		if (!pClient->InitZlib(pTransfer))
+			goto endofretrieve;
 		pTransfer->zStream.next_in = (Bytef*) pBuffer;
 		pTransfer->zStream.next_out = (Bytef*) pOutBuffer;
 		pTransfer->zStream.avail_out = uiBufferSize;
@@ -2380,30 +2382,35 @@ void* CFtpServer::CClientEntry::RetrieveThread(void *pvParam)
 			while (pClient->DataSock != INVALID_SOCKET
 					&& (BlockSize = read(hFile, pBuffer, uiBufferSize)) > 0) {
 #ifdef CFTPSERVER_ENABLE_ZLIB
-				if( pTransfer->eDataMode == ZLIB ) {
-					nFlush = eof( hFile ) ? Z_FINISH : Z_NO_FLUSH;
+				if (pTransfer->eDataMode == ZLIB) {
+					nFlush = eof(hFile) ? Z_FINISH : Z_NO_FLUSH;
 					pTransfer->zStream.avail_in = BlockSize;
 					pTransfer->zStream.next_in = (Bytef*) pBuffer;
-					do
-					{
-						nRet = deflate( &pTransfer->zStream, nFlush );
-						if( nRet == Z_STREAM_ERROR )
-						break;
-						if( pTransfer->zStream.avail_out == 0 || nRet == Z_STREAM_END ) {
-							len = send( pClient->DataSock, pOutBuffer, uiBufferSize - pTransfer->zStream.avail_out, MSG_NOSIGNAL );
-							if( len <= 0 )
-							{	len =-1; break;}
+					do {
+						nRet = deflate(&pTransfer->zStream, nFlush);
+						if (nRet == Z_STREAM_ERROR)
+							break;
+						if (pTransfer->zStream.avail_out
+								== 0|| nRet == Z_STREAM_END) {
+							len = send(pClient->DataSock, pOutBuffer,
+									uiBufferSize - pTransfer->zStream.avail_out,
+									MSG_NOSIGNAL);
+							if (len <= 0) {
+								len = -1;
+								break;
+							}
 							pTransfer->zStream.next_out = (Bytef*) pOutBuffer;
 							pTransfer->zStream.avail_out = uiBufferSize;
 						}
-					}while( pTransfer->zStream.avail_in != 0 || ( nFlush == Z_FINISH && nRet == Z_OK ) );
-					if( len < 0 || nRet == Z_STREAM_ERROR || nFlush == Z_FINISH )
-					break;
+					} while (pTransfer->zStream.avail_in != 0
+							|| (nFlush == Z_FINISH && nRet == Z_OK));
+					if (len < 0 || nRet == Z_STREAM_ERROR || nFlush == Z_FINISH)
+						break;
 				} else
 #endif
 				{
 					len = send(pClient->DataSock, pBuffer, BlockSize,
-							MSG_NOSIGNAL);
+					MSG_NOSIGNAL);
 					if (len <= 0)
 						break;
 				}
@@ -2415,9 +2422,10 @@ void* CFtpServer::CClientEntry::RetrieveThread(void *pvParam)
 	endofretrieve: if (pBuffer)
 		delete[] pBuffer;
 #ifdef CFTPSERVER_ENABLE_ZLIB
-	if( pTransfer->eDataMode == ZLIB ) {
-		deflateEnd( &pTransfer->zStream );
-		if( pOutBuffer ) delete [] pOutBuffer;
+	if (pTransfer->eDataMode == ZLIB) {
+		deflateEnd(&pTransfer->zStream);
+		if (pOutBuffer)
+			delete[] pOutBuffer;
 	}
 #endif
 
@@ -2495,25 +2503,26 @@ bool CFtpServer::CClientEntry::AddToListBuffer(DataTransfer_t *pTransfer,
 		unsigned int *nBufferPos, unsigned int uiBufferSize) {
 
 #ifdef CFTPSERVER_ENABLE_ZLIB
-	if( pTransfer->eDataMode == ZLIB ) {
+	if (pTransfer->eDataMode == ZLIB) {
 		int nRet;
 		pTransfer->zStream.avail_in = nLineLen;
 		pTransfer->zStream.next_in = (Bytef*) pszListLine;
 		int nFlush = pszListLine ? Z_NO_FLUSH : Z_FINISH;
-		do
-		{
-			nRet = deflate( &pTransfer->zStream, nFlush );
-			if( nRet == Z_STREAM_ERROR )
-			return false;
-			if( pTransfer->zStream.avail_out == 0 || nRet == Z_STREAM_END ) {
-				*nBufferPos = uiBufferSize - pTransfer->zStream.avail_out;
-				if( send( pTransfer->SockList, pBuffer, *nBufferPos, MSG_NOSIGNAL ) <= 0 )
+		do {
+			nRet = deflate(&pTransfer->zStream, nFlush);
+			if (nRet == Z_STREAM_ERROR)
 				return false;
+			if (pTransfer->zStream.avail_out == 0 || nRet == Z_STREAM_END) {
+				*nBufferPos = uiBufferSize - pTransfer->zStream.avail_out;
+				if (send(pTransfer->SockList, pBuffer, *nBufferPos,
+						MSG_NOSIGNAL) <= 0)
+					return false;
 				*nBufferPos = 0;
 				pTransfer->zStream.next_out = (Bytef*) pBuffer;
 				pTransfer->zStream.avail_out = uiBufferSize;
 			}
-		}while( pTransfer->zStream.avail_in != 0 || ( nFlush == Z_FINISH && nRet == Z_OK ) );
+		} while (pTransfer->zStream.avail_in != 0
+				|| (nFlush == Z_FINISH && nRet == Z_OK));
 		*nBufferPos = uiBufferSize - pTransfer->zStream.avail_out;
 	} else
 #endif
@@ -2527,7 +2536,7 @@ bool CFtpServer::CClientEntry::AddToListBuffer(DataTransfer_t *pTransfer,
 			*nBufferPos += iCanCopyLen;
 			if (*nBufferPos == uiBufferSize) {
 				if (send(pTransfer->SockList, pBuffer, uiBufferSize,
-						MSG_NOSIGNAL) <= 0)
+				MSG_NOSIGNAL) <= 0)
 					return false;
 				*nBufferPos = 0;
 				if (iCanCopyLen < nLineLen) {
@@ -2570,7 +2579,7 @@ void* CFtpServer::CClientEntry::ListThread(void *pvParam)
 
 			if (iFileLineLen > 0)
 				send(pTransfer->SockList, psFileLine, iFileLineLen,
-						MSG_NOSIGNAL);
+				MSG_NOSIGNAL);
 
 		} else {
 
@@ -2585,9 +2594,9 @@ void* CFtpServer::CClientEntry::ListThread(void *pvParam)
 			}
 
 #ifdef CFTPSERVER_ENABLE_ZLIB
-			if( pTransfer->eDataMode == ZLIB ) {
-				if( !pClient->InitZlib( pTransfer ) )
-				goto endoflist;
+			if (pTransfer->eDataMode == ZLIB) {
+				if (!pClient->InitZlib(pTransfer))
+					goto endoflist;
 				pTransfer->zStream.next_in = (Bytef*) psFileLine;
 				pTransfer->zStream.next_out = (Bytef*) pBuffer;
 				pTransfer->zStream.avail_out = uiBufferSize;
@@ -2631,8 +2640,8 @@ void* CFtpServer::CClientEntry::ListThread(void *pvParam)
 			if (pBuffer)
 				delete[] pBuffer;
 #ifdef CFTPSERVER_ENABLE_ZLIB
-			if( pTransfer->eDataMode == ZLIB )
-			deflateEnd( &pTransfer->zStream );
+			if (pTransfer->eDataMode == ZLIB)
+				deflateEnd(&pTransfer->zStream);
 #endif
 		}
 		delete[] psFileLine;
@@ -2717,7 +2726,7 @@ bool CFtpServer::CEnumFileInfo::FindNext() {
 #else
 	struct dirent *dir_entry_result = NULL;
 	if (readdir_r(dp, &dir_entry, &dir_entry_result)
-			== 0 && dir_entry_result != NULL) {
+			== 0&& dir_entry_result != NULL) {
 		int iDirPathLen = strlen(szDirPath);
 		int iFileNameLen = strlen(dir_entry.d_name);
 		if (iDirPathLen + iFileNameLen >= MAX_PATH)

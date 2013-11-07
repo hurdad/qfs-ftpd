@@ -99,7 +99,7 @@ typedef long long __int64;
 //#include "kfs/KfsAttr.h"
 #include <string>
 
-//#include <iostream>
+#include <iostream>
 
 /**
  * @brief CFtpServer class
@@ -392,7 +392,7 @@ public:
 			std::string sRootPath) {
 		QFSConfig.metaServerHost = sHost;
 		QFSConfig.metaServerPort = iPort;
-		//	QFSConfig.rootPath = sRootPath;
+		QFSConfig.rootPath = sRootPath;
 	}
 
 	/**
@@ -484,43 +484,48 @@ public:
 		QFS_CONNECT_ERROR
 	};
 
-#ifdef CFTPSERVER_ENABLE_EVENTS
-
-	typedef void (*OnServerEventCallback_t) ( int Event );
-	typedef void (*OnUserEventCallback_t) ( int Event, CFtpServer::CUserEntry *pUser, void *pArg );
-	typedef void (*OnClientEventCallback_t) ( int Event, CFtpServer::CClientEntry *pClient, void *pArg );
+	typedef void (*OnServerEventCallback_t)(int Event);
+	typedef void (*OnUserEventCallback_t)(int Event,
+			CFtpServer::CUserEntry *pUser, void *pArg);
+	typedef void (*OnClientEventCallback_t)(int Event,
+			CFtpServer::CClientEntry *pClient, void *pArg);
 
 	/**
 	 * Set the Server event callback.
 	 *
 	 * @param  pCallback  the Callback function.
 	 */
-	void SetServerCallback( OnServerEventCallback_t pCallback )
-	{	_OnServerEventCb = pCallback;}
+	void SetServerCallback(OnServerEventCallback_t pCallback) {
+		_OnServerEventCb = pCallback;
+	}
 
 	/**
 	 * Set the User event callback.
 	 *
 	 * @param  pCallback  the Callback function.
 	 */
-	void SetUserCallback( OnUserEventCallback_t pCallback )
-	{	_OnUserEventCb = pCallback;}
+	void SetUserCallback(OnUserEventCallback_t pCallback) {
+		_OnUserEventCb = pCallback;
+	}
 
 	/**
 	 * Set the Client event callback.
 	 *
 	 * @param  pCallback  the Callback function.
 	 */
-	void SetClientCallback( OnClientEventCallback_t pCallback )
-	{	_OnClientEventCb = pCallback;}
+	void SetClientCallback(OnClientEventCallback_t pCallback) {
+		_OnClientEventCb = pCallback;
+	}
 
 	/**
 	 * Call the Server event callback.
 	 *
 	 * @param  Event  the Callback arguments.
 	 */
-	void OnServerEventCb( int Event )
-	{	if( _OnServerEventCb ) _OnServerEventCb( Event );}
+	void OnServerEventCb(int Event) {
+		if (_OnServerEventCb)
+			_OnServerEventCb(Event);
+	}
 
 	/**
 	 * Call the User event callback.
@@ -529,8 +534,11 @@ public:
 	 * @param  pUser  a pointer to the User class.
 	 * @param  pArg     a pointer to something that depends on Event.
 	 */
-	void OnUserEventCb( int Event, CFtpServer::CUserEntry *pUser, void *pArg = NULL )
-	{	if( _OnUserEventCb ) _OnUserEventCb( Event, pUser, pArg );}
+	void OnUserEventCb(int Event, CFtpServer::CUserEntry *pUser, void *pArg =
+			NULL) {
+		if (_OnUserEventCb)
+			_OnUserEventCb(Event, pUser, pArg);
+	}
 
 	/**
 	 * Call the Client event callback.
@@ -539,19 +547,12 @@ public:
 	 * @param  pClient  a pointer to the Client class.
 	 * @param  pArg     a pointer to something that depends on Event.
 	 */
-	void OnClientEventCb( int Event, CFtpServer::CClientEntry *pClient, void *pArg = NULL )
-	{	if( _OnClientEventCb ) _OnClientEventCb( Event, pClient, pArg );}
-
-#else
-	void OnServerEventCb(int Event) const {
-	}
-	void OnUserEventCb(int Event, CFtpServer::CUserEntry *pUser, void *pArg =
-			NULL) const {
-	}
 	void OnClientEventCb(int Event, CFtpServer::CClientEntry *pClient,
-			void *pArg = NULL) const {
+			void *pArg = NULL) {
+		if (_OnClientEventCb)
+			_OnClientEventCb(Event, pClient, pArg);
 	}
-#endif // #ifdef CFTPSERVER_ENABLE_EVENTS
+
 	////////////////////////////////////////
 	// USER
 	////////////////////////////////////////
@@ -599,11 +600,9 @@ private:
 	// EVENTS
 	////////////////////////////////////////
 
-#ifdef CFTPSERVER_ENABLE_EVENTS
 	OnServerEventCallback_t _OnServerEventCb;
 	OnUserEventCallback_t _OnUserEventCb;
 	OnClientEventCallback_t _OnClientEventCb;
-#endif
 
 	////////////////////////////////////////
 	// CLASS CCriticialSection
