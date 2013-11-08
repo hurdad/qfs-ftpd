@@ -72,7 +72,7 @@ int main(int argc, char * argv[]) {
 	CFtpServer::CUserEntry *pAnonymousUser = FtpServer.AddUser( "anonymous", NULL, "/" );
 	if( pAnonymousUser ) {
 		printf( "-Anonymous user successfully created.\r\n" );
-		pAnonymousUser->SetPrivileges( CFtpServer::LIST | CFtpServer::READFILE );
+		pAnonymousUser->SetPrivileges('?');
 	} else
 		printf( "-Can't create anonymous user.\r\n" );
 
@@ -81,6 +81,7 @@ int main(int argc, char * argv[]) {
 			server.ListeningPort)) {
 
 		if (FtpServer.StartAccepting()) {
+			printf( "-Listening.\r\n" );
 
 			//loop
 			for (;;)

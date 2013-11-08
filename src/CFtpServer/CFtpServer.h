@@ -51,7 +51,6 @@
 #include CFTPSERVER_ZLIB_H_PATH
 #endif
 
-#ifndef WIN32
 #ifdef __ECOS
 #define USE_BSDSOCKETS
 #define SOCKET int
@@ -76,16 +75,6 @@ typedef long long __int64;
 #include <arpa/inet.h>
 #include <errno.h>
 #include <unistd.h>
-#else
-#ifdef _MSC_VER
-#pragma comment(lib,"ws2_32.lib")
-#endif
-#define WIN32_LEAN_AND_MEAN
-#include <io.h>
-#include <direct.h>
-#include <winsock2.h>
-#include <process.h>
-#endif
 
 #ifndef INADDR_NONE
 #define INADDR_NONE	((unsigned long int) 0xffffffff)
@@ -94,12 +83,13 @@ typedef long long __int64;
 #define INADDR_ANY	((unsigned long int) 0x00000000)
 #endif
 
-//QFS Client Library Headers
-//#include "kfs/KfsClient.h"
-//#include "kfs/KfsAttr.h"
+//QFS Client Library Headers and Dependencies
+#include "kfs/KfsClient.h"
+#include "kfs/KfsAttr.h"
 #include <string>
-
 #include <iostream>
+#include <vector>
+typedef std::vector<KFS::KfsFileAttr> QDIR;
 
 /**
  * @brief CFtpServer class
@@ -144,7 +134,8 @@ public:
 	 * @return  "true"   on success,
 	 *          "false"  on error: the supplied Address or TCP-Port may not be valid.
 	 */
-	bool StartListening(unsigned long ulAddr, unsigned short int usPort);
+	bool
+	StartListening(unsigned long ulAddr, unsigned short int usPort);
 
 	/**
 	 * Ask the Server to Stop Listening.
@@ -152,7 +143,8 @@ public:
 	 * @return  "true"   on success,
 	 *          "false"  on error.
 	 */
-	bool StopListening();
+	bool
+	StopListening();
 
 	/**
 	 * Check if the Server is currently Listening.
@@ -170,7 +162,8 @@ public:
 	 * @return  "true"   on success,
 	 *          "false"  on error.
 	 */
-	bool StartAccepting();
+	bool
+	StartAccepting();
 
 	/**
 	 * Check if the Server is currently Accpeting Clients.
@@ -204,7 +197,8 @@ public:
 	 * @return  "true"   on success,
 	 *          "false"  on error.
 	 */
-	bool SetDataPortRange(unsigned short int usStart, unsigned short int uiLen);
+	bool
+	SetDataPortRange(unsigned short int usStart, unsigned short int uiLen);
 
 	/**
 	 * Get the TCP Port Range CFtpServer can use to Send and Receive Files or Data.
@@ -215,8 +209,8 @@ public:
 	 * @return  "true"   on success,
 	 *          "false"  on error.
 	 */
-	bool GetDataPortRange(unsigned short int *usStart,
-			unsigned short int *usLen);
+	bool
+	GetDataPortRange(unsigned short int *usStart, unsigned short int *usLen);
 
 	/**
 	 * Set the time in which a user has to login.
@@ -366,7 +360,8 @@ public:
 	 *
 	 * @param  bEnable  true to enable, and false to disable.
 	 */
-	void EnableModeZ( bool bEnable ) {bEnableZlib = bEnable;}
+	void EnableModeZ( bool bEnable )
+	{	bEnableZlib = bEnable;}
 
 	/**
 	 * Check if data transfer compression is enabled.
@@ -374,7 +369,8 @@ public:
 	 * @return  "true"   if enabled,
 	 *          "false"  otherwise.
 	 */
-	bool IsModeZEnabled() const {return bEnableZlib;}
+	bool IsModeZEnabled() const
+	{	return bEnableZlib;}
 #endif
 
 	////////////////////////////////////////
@@ -388,8 +384,7 @@ public:
 	 * @param  iPort   port number
 	 * @param  sRootPath   root path directory
 	 */
-	void SetQFSConnectionConfig(std::string sHost, int iPort,
-			std::string sRootPath) {
+	void SetQFSConnectionConfig(std::string sHost, int iPort, std::string sRootPath) {
 		QFSConfig.metaServerHost = sHost;
 		QFSConfig.metaServerPort = iPort;
 		QFSConfig.rootPath = sRootPath;
@@ -484,11 +479,12 @@ public:
 		QFS_CONNECT_ERROR
 	};
 
-	typedef void (*OnServerEventCallback_t)(int Event);
-	typedef void (*OnUserEventCallback_t)(int Event,
-			CFtpServer::CUserEntry *pUser, void *pArg);
-	typedef void (*OnClientEventCallback_t)(int Event,
-			CFtpServer::CClientEntry *pClient, void *pArg);
+	typedef void
+	(*OnServerEventCallback_t)(int Event);
+	typedef void
+	(*OnUserEventCallback_t)(int Event, CFtpServer::CUserEntry *pUser, void *pArg);
+	typedef void
+	(*OnClientEventCallback_t)(int Event, CFtpServer::CClientEntry *pClient, void *pArg);
 
 	/**
 	 * Set the Server event callback.
@@ -535,7 +531,7 @@ public:
 	 * @param  pArg     a pointer to something that depends on Event.
 	 */
 	void OnUserEventCb(int Event, CFtpServer::CUserEntry *pUser, void *pArg =
-			NULL) {
+	NULL) {
 		if (_OnUserEventCb)
 			_OnUserEventCb(Event, pUser, pArg);
 	}
@@ -547,8 +543,8 @@ public:
 	 * @param  pClient  a pointer to the Client class.
 	 * @param  pArg     a pointer to something that depends on Event.
 	 */
-	void OnClientEventCb(int Event, CFtpServer::CClientEntry *pClient,
-			void *pArg = NULL) {
+	void OnClientEventCb(int Event, CFtpServer::CClientEntry *pClient, void *pArg =
+	NULL) {
 		if (_OnClientEventCb)
 			_OnClientEventCb(Event, pClient, pArg);
 	}
@@ -569,7 +565,8 @@ public:
 		DELETEDIR = 0x20
 	};
 #ifdef CFTPSERVER_ENABLE_EXTRACMD
-	enum {
+	enum
+	{
 		ExtraCmd_EXEC = 0x1,
 	};
 #endif
@@ -584,8 +581,8 @@ public:
 	 * @return on success  a pointer to the newly created User;
 	 *         on error    NULL.
 	 */
-	CUserEntry *AddUser(const char *pszLogin, const char *pszPass,
-			const char *pszStartDir);
+	CUserEntry *
+	AddUser(const char *pszLogin, const char *pszPass, const char *pszStartDir);
 
 	/**
 	 * Delete a User, and by the way all the Clients connected to this User.
@@ -593,7 +590,8 @@ public:
 	 * @return  "true"   on success,
 	 *          "false"  on error.
 	 */
-	bool DeleteUser(CFtpServer::CUserEntry *pUser);
+	bool
+	DeleteUser(CFtpServer::CUserEntry *pUser);
 
 private:
 	////////////////////////////////////////
@@ -611,43 +609,24 @@ private:
 	class CCriticialSection {
 	public:
 		bool Initialize() {
-#ifdef WIN32
-			InitializeCriticalSection( &m_CS );
-#else
 			pthread_mutex_init(&m_CS, NULL);
-#endif
 			return true;
 		}
 		bool Enter() {
-#ifdef WIN32
-			EnterCriticalSection( &m_CS );
-#else
 			pthread_mutex_lock(&m_CS);
-#endif
 			return true;
 		}
 		bool Leave() {
-#ifdef WIN32
-			LeaveCriticalSection( &m_CS );
-#else
 			pthread_mutex_unlock(&m_CS);
-#endif
 			return true;
 		}
 		bool Destroy() {
-#ifdef WIN32
-			DeleteCriticalSection( &m_CS );
-#else
 			pthread_mutex_destroy(&m_CS);
-#endif
 			return true;
 		}
 	private:
-#ifdef WIN32
-		CRITICAL_SECTION m_CS;
-#else
 		pthread_mutex_t m_CS;
-#endif
+
 	} FtpServerLock;
 
 	////////////////////////////////////////
@@ -664,7 +643,8 @@ private:
 	/**
 	 * @warning  MUST lock the UserListLock before calling this function.
 	 */
-	CUserEntry *SearchUserFromLogin(const char *pszName);
+	CUserEntry *
+	SearchUserFromLogin(const char *pszName);
 
 	////////////////////////////////////////
 	// CLIENT
@@ -676,7 +656,8 @@ private:
 	 * @return  on success  a pointer to the new CClientEntry class,
 	 *          on error    NULL.
 	 */
-	CFtpServer::CClientEntry *AddClient(SOCKET Sock, struct sockaddr_in *Sin);
+	CFtpServer::CClientEntry *
+	AddClient(SOCKET Sock, struct sockaddr_in *Sin);
 
 	class CCriticialSection ClientListLock;
 	class CClientEntry *pFirstClient, *pLastClient;
@@ -695,17 +676,12 @@ private:
 	bool bIsAccepting;
 	unsigned short int usListeningPort;
 
-#ifdef WIN32
-	HANDLE hAcceptingThread;
-	unsigned uAcceptingThreadID;
-	static unsigned __stdcall StartAcceptingEx( void *pvParam );
-#else
 	pthread_t AcceptingThreadID;
-	static void *StartAcceptingEx(void *pvParam);
+	static void *
+	StartAcceptingEx(void *pvParam);
 	pthread_attr_t m_pattrServer;
 	pthread_attr_t m_pattrClient;
 	pthread_attr_t m_pattrTransfer;
-#endif
 
 	////////////////////////////////////////
 	// FILE
@@ -714,7 +690,8 @@ private:
 	/**
 	 * Simplify a Path.
 	 */
-	static bool SimplifyPath(char *pszPath);
+	static bool
+	SimplifyPath(char *pszPath);
 
 	////////////////////////////////////////
 	// STATISTIC
@@ -772,7 +749,8 @@ public:
 	 * @return  "true"   on success,
 	 *          "false"  on error.
 	 */
-	bool SetPrivileges(unsigned char ucPriv);
+	bool
+	SetPrivileges(unsigned char ucPriv);
 
 	/**
 	 * Get a User's privileges
@@ -815,7 +793,8 @@ public:
 	 *
 	 * @return  A pointer to the User's Name.
 	 */
-	const char *GetLogin() const {
+	const char *
+	GetLogin() const {
 		return szLogin;
 	}
 
@@ -824,7 +803,8 @@ public:
 	 *
 	 * @return	A pointer to the User's Password.
 	 */
-	const char *GetPassword() const {
+	const char *
+	GetPassword() const {
 		return szPassword;
 	}
 
@@ -833,7 +813,8 @@ public:
 	 *
 	 * @return  A pointer to the User's Start Directory.
 	 */
-	const char *GetStartDirectory() const {
+	const char *
+	GetStartDirectory() const {
 		return szStartDirectory;
 	}
 
@@ -853,7 +834,8 @@ public:
 	 *
 	 * @return  The user's Extra-Commands concatenated with the bitwise inclusive binary operator "|".
 	 */
-	unsigned char GetExtraCommand() const {return ucExtraCommand;}
+	unsigned char GetExtraCommand() const
+	{	return ucExtraCommand;}
 #endif
 
 private:
@@ -892,7 +874,8 @@ public:
 	 *
 	 * @return  A pointer to a in_addr structure.
 	 */
-	struct in_addr *GetIP() const {
+	struct in_addr *
+	GetIP() const {
 		return (struct in_addr*) &ulClientIP;
 	}
 
@@ -901,7 +884,8 @@ public:
 	 *
 	 * @return  A pointer to a in_addr structure.
 	 */
-	struct in_addr *GetServerIP() const {
+	struct in_addr *
+	GetServerIP() const {
 		return (struct in_addr*) &ulServerIP;
 	}
 
@@ -923,7 +907,8 @@ public:
 	 * @return  "true"   if the client has all the supplied privileges,
 	 *          "false"  otherwise.
 	 */
-	bool CheckPrivileges(unsigned char ucPriv) const;
+	bool
+	CheckPrivileges(unsigned char ucPriv) const;
 
 	/**
 	 * Get a pointer to the Client's User.
@@ -931,14 +916,16 @@ public:
 	 * @return  a pointer to the client's user if the client is logged-in,
 	 *          NULL otherwise.
 	 */
-	CUserEntry *GetUser() const {
+	CUserEntry *
+	GetUser() const {
 		return (bIsLogged ? pUser : NULL);
 	}
 
 	/**
 	 * Get the CWD ( Current Working Directory ) of the Client.
 	 */
-	char *GetWorkingDirectory() {
+	char *
+	GetWorkingDirectory() {
 		return szWorkingDir;
 	}
 
@@ -948,7 +935,8 @@ public:
 	 * @return  "true"   on success,
 	 *          "false"  on error.
 	 */
-	bool InitDelete();
+	bool
+	InitDelete();
 
 private:
 
@@ -960,8 +948,10 @@ private:
 
 	bool bIsLogged;
 
-	void LogIn();
-	void LogOut();
+	void
+	LogIn();
+	void
+	LogOut();
 
 	void ResetTimeout() {
 		time(&tTimeoutTime);
@@ -990,21 +980,17 @@ private:
 	int iCmdRecvdLen;
 	int nRemainingCharToParse;
 
-	int ParseLine();
-	bool ReceiveLine();
+	int
+	ParseLine();
+	bool
+	ReceiveLine();
 
 	unsigned int nPasswordTries;
 
 	class CCriticialSection ClientLock;
 
-#ifdef WIN32
-	HANDLE hClientThread;
-	unsigned uClientThreadID;
-	static unsigned __stdcall Shell( void *pvParam );
-#else
 	pthread_t ClientThreadID;
 	static void* Shell(void *pvParam);
-#endif
 
 	enum {
 		CMD_NONE = -1,
@@ -1058,18 +1044,18 @@ private:
 
 	int iZlibLevel;
 
-	/// Enum the differents Modes of Transfer.
+	/// Enum the different Modes of Transfer.
 	enum DataMode_t {
 		STREAM, ZLIB
 	} eDataMode;
 
-	/// Enum the differents Type of Transfer.
+	/// Enum the different Type of Transfer.
 	enum DataType_t {
 		ASCII, BINARY, ///< equals to IMAGE
 		EBCDIC
 	} eDataType;
 
-	/// Enum the differents Modes of Connection for transfering Data.
+	/// Enum the different Modes of Connection for transferring Data.
 	enum DataConnection_t {
 		NONE, PASV, PORT
 	} eDataConnection;
@@ -1078,20 +1064,10 @@ private:
 		CFtpServer::CClientEntry *pClient;
 #ifdef __USE_FILE_OFFSET64
 		__int64 RestartAt;
-#ifdef WIN32
-		struct _stati64 st;
-#else
-		struct stat st;
-#endif
 #else
 		int RestartAt;
-#ifdef WIN32
-		struct _stat st;
-#else
-		struct stat st;
 #endif
-#endif
-
+		KFS::KfsFileAttr fileAttr;
 		int nCmd;
 		SOCKET SockList;
 		bool opt_a, opt_d, opt_F, opt_l;
@@ -1103,36 +1079,32 @@ private:
 		DataType_t eDataType;
 
 		char szPath[ MAX_PATH + 1];
-#ifdef WIN32
-		HANDLE hTransferThread;
-		unsigned uTransferThreadID;
-#else
 		pthread_t TransferThreadID;
-#endif
+
 	} CurrentTransfer;
 
 #ifdef CFTPSERVER_ENABLE_ZLIB
 	bool InitZlib( DataTransfer_t *pTransfer );
 #endif
 
-	bool OpenDataConnection(int nCmd); ///< Open the Data Channel in order to transmit data.
-	bool ResetDataConnection(bool bSyncWait = true); ///< Close the Data Channel.
+	bool
+	OpenDataConnection(int nCmd); ///< Open the Data Channel in order to transmit data.
+	bool
+	ResetDataConnection(bool bSyncWait = true); ///< Close the Data Channel.
 
-#ifdef WIN32
-	static unsigned __stdcall RetrieveThread( void *pvParam );
-	static unsigned __stdcall StoreThread( void *pvParam );
-	static unsigned __stdcall ListThread( void *pvParam );
-#else
-	static void* RetrieveThread(void *pvParem);
-	static void* StoreThread(void *pvParam);
-	static void* ListThread(void *pvParam);
-#endif
+	static void*
+	RetrieveThread(void *pvParem);
+	static void*
+	StoreThread(void *pvParam);
+	static void*
+	ListThread(void *pvParam);
 
 	////////////////////////////////////////
 	// FILE
 	////////////////////////////////////////
 
-	bool SafeWrite(int hFile, char *pBuffer, int nLen);
+	bool
+	SafeWrite(int hFile, char *pBuffer, int nLen);
 
 	/**
 	 * Build a Full-Path using:
@@ -1143,7 +1115,8 @@ private:
 	 *
 	 * @note  Call interally BuildVirtualPath() and store a pointer to the virtual path in pszVirtualPath.
 	 */
-	char* BuildPath(char* szAskedPath, char **pszVirtualPath = NULL);
+	char*
+	BuildPath(char* szAskedPath, char **pszVirtualPath = NULL);
 
 	/**
 	 * Build a Virtual-Path using:
@@ -1151,14 +1124,16 @@ private:
 	 * @li  the Client's Working Directory,
 	 * @li  the Client Command.
 	 */
-	char* BuildVirtualPath(char* szAskedPath);
+	char*
+	BuildVirtualPath(char* szAskedPath);
 
 	/**
 	 * Build a list line.
 	 *
 	 * @warning  psLine must be at least CFTPSERVER_LIST_MAX_LINE_LEN chars long.
 	 */
-	int GetFileListLine(char* psLine, unsigned short mode,
+	int
+	GetFileListLine(char* psLine, unsigned short mode,
 #ifdef __USE_FILE_OFFSET64
 			__int64 size,
 #else
@@ -1169,9 +1144,9 @@ private:
 	/**
 	 * Copy the list line to a buffer, and send it to the client when full.
 	 */
-	bool AddToListBuffer(DataTransfer_t *pTransfer, char *pszListLine,
-			int nLineLen, char *pBuffer, unsigned int *nBufferPos,
-			unsigned int uiBufferSize);
+	bool
+	AddToListBuffer(DataTransfer_t *pTransfer, char *pszListLine, int nLineLen, char *pBuffer,
+			unsigned int *nBufferPos, unsigned int uiBufferSize);
 
 	////////////////////////////////////////
 	// USER LINK
@@ -1195,25 +1170,27 @@ private:
 	bool bIsCtrlCanalOpen;
 	class CFtpServer *pFtpServer;
 
-	//KFS::KfsClient *gKfsClient; //QFS Connection
+	KFS::KfsClient *gKfsClient; //QFS Connection
 
 	/**
 	 * Send a reply to the Client.
 	 *
 	 * @return  "true"   on success,
-	 *          "false"  on error: The Socket may be invalid or the Connection may have been interupted.
+	 *          "false"  on error: The Socket may be invalid or the Connection may have been interrupted.
 	 */
-	bool SendReply(const char *pszReply, bool bNoNeedToAlloc = 0);
+	bool
+	SendReply(const char *pszReply, bool bNoNeedToAlloc = 0);
 
 	/**
 	 * Send a custom reply to the Client.
 	 *
 	 * @return  "true"   on success;
-	 *          "false"  on error: The Socket may be invalid or the Connection may have been interupted.
+	 *          "false"  on error: The Socket may be invalid or the Connection may have been interrupted.
 	 *
 	 * @note  Call interally SendReply().
 	 */
-	bool SendReply2(const char *pszList, ...);
+	bool
+	SendReply2(const char *pszList, ...);
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -1228,23 +1205,12 @@ public:
 	CEnumFileInfo() {
 		memset(this, 0x0, sizeof(CEnumFileInfo));
 	}
-	bool FindFirst(const char *pszPath);
-	bool FindNext();
-	bool FindClose();
-
-#ifdef WIN32
-	long hFile;
-	char pszTempPath[ MAX_PATH + 1 ];
-#ifdef __USE_FILE_OFFSET64
-	struct _finddatai64_t c_file;
-#else
-	struct _finddata_t c_file;
-#endif
-#else
-	DIR *dp;
-	struct stat st;
-	struct dirent dir_entry;
-#endif
+	bool
+	FindFirst(const char *pszPath);
+	bool
+	FindNext();
+	bool
+	FindClose();
 
 	char *pszName;
 	char szDirPath[ MAX_PATH + 1];
@@ -1256,6 +1222,10 @@ public:
 #endif
 	time_t mtime; // similar to st_mtime.
 	unsigned short mode; // similar to st_mode.
+
+	KFS::KfsClient *gKfsClient; //QFS Connection
+	int qres; //QFS Return Value
+	QDIR qdir; //QFS Read Directory Plus Vector
 };
 
 #endif // #ifdef CFTPSERVER_H
