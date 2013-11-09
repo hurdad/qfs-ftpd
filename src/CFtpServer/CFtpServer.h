@@ -89,6 +89,7 @@ typedef long long __int64;
 #include <string>
 #include <iostream>
 #include <vector>
+#include <map>
 typedef std::vector<KFS::KfsFileAttr> QDIR;
 
 /**
@@ -1133,13 +1134,7 @@ private:
 	 * @warning  psLine must be at least CFTPSERVER_LIST_MAX_LINE_LEN chars long.
 	 */
 	int
-	GetFileListLine(char* psLine, unsigned short mode,
-#ifdef __USE_FILE_OFFSET64
-			__int64 size,
-#else
-			long size,
-#endif
-			time_t mtime, const char* pszName, bool opt_F);
+	GetFileListLine(char* psLine, KFS::KfsFileAttr* attr, const char* pszName, bool opt_F);
 
 	/**
 	 * Copy the list line to a buffer, and send it to the client when full.
@@ -1171,6 +1166,12 @@ private:
 	class CFtpServer *pFtpServer;
 
 	KFS::KfsClient *gKfsClient; //QFS Connection
+
+	typedef std::map<KFS::kfsUid_t, std::string> UserNames;
+	typedef std::map<KFS::kfsGid_t, std::string> GroupNames;
+
+	UserNames  mUserNames; //QFS Users
+	GroupNames mGroupNames; //QFS Groups
 
 	/**
 	 * Send a reply to the Client.
@@ -1215,15 +1216,9 @@ public:
 	char *pszName;
 	char szDirPath[ MAX_PATH + 1];
 	char szFullPath[ MAX_PATH + 1];
-#ifdef __USE_FILE_OFFSET64
-	__int64 size;
-#else
-	long size;
-#endif
-	time_t mtime; // similar to st_mtime.
-	unsigned short mode; // similar to st_mode.
 
 	KFS::KfsClient *gKfsClient; //QFS Connection
+	KFS::KfsFileAttr *fileAttr; //QFS File Attributes
 	int qres; //QFS Return Value
 	QDIR qdir; //QFS Read Directory Plus Vector
 };

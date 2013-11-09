@@ -2335,13 +2335,8 @@ CFtpServer::CClientEntry::RetrieveThread(void *pvParam)
 }
 
 // !!!  psLine must be at least CFTPSERVER_LIST_MAX_LINE_LEN (=MAX_PATH+57) char long.
-int CFtpServer::CClientEntry::GetFileListLine(char* psLine, unsigned short mode,
-#ifdef __USE_FILE_OFFSET64
-		__int64 size,
-#else
-		long size,
-#endif
-		time_t mtime, const char* pszName, bool opt_F) {
+int CFtpServer::CClientEntry::GetFileListLine(char* psLine, KFS::KfsFileAttr* attr,
+		const char* pszName, bool opt_F) {
 
 	if (!psLine || !pszName)
 		return -1;
@@ -2351,25 +2346,65 @@ int CFtpServer::CClientEntry::GetFileListLine(char* psLine, unsigned short mode,
 	static const char *pszMonth[] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep",
 			"Oct", "Nov", "Dec" };
 
-	static const char szListFile[] = "%c%c%c%c%c%c%c%c%c%c 1 user group %14"
-#ifdef __USE_FILE_OFFSET64
-			"ll"
-#else
-					"l"
-#endif
-			"i %s %2d %s %s%s\r\n";
+	static const char szListFile[] = "%c%s 1 %-10s %-10s %14lli %s %2d %s %s%s\r\n";
 
+	time_t mtime = attr->mtime.tv_sec;
 	struct tm *t = gmtime((time_t *) &mtime); // UTC Time
 	if (time(NULL) - mtime > 180 * 24 * 60 * 60) {
 		sprintf(szYearOrHour, "%5d", t->tm_year + 1900);
 	} else
 		sprintf(szYearOrHour, "%02d:%02d", t->tm_hour, t->tm_min);
 
-	int iLineLen = sprintf(psLine, szListFile, (S_ISDIR(mode)) ? 'd' : '-',
-			(mode & S_IREAD) == S_IREAD ? 'r' : '-', (mode & S_IWRITE) == S_IWRITE ? 'w' : '-',
-			(mode & S_IEXEC) == S_IEXEC ? 'x' : '-', '-', '-', '-', '-', '-', '-', size,
-			pszMonth[t->tm_mon], t->tm_mday, szYearOrHour, pszName,
-			(opt_F && S_ISDIR(mode) ? "/" : ""));
+	//permissions
+	std::string perms;
+	std::stringstream ss;
+	if (attr->mode == KFS::kKfsModeUndef) {
+		perms = "";
+	} else {
+		for (int i = 8; i > 0;) {
+			const char* perm[2] = { "---", "rwx" };
+			for (int k = 0; k < 3; k++) {
+				ss << perm[(attr->mode >> i--) & 1][k];
+			}
+		}
+		perms = ss.str();
+	}
+
+	//username
+	const char *user;
+	if (attr->user == KFS::kKfsUserNone) {
+		user = "user";
+	} else {
+		UserNames::const_iterator it = mUserNames.find(attr->user);
+		if (it == mUserNames.end()) {
+			std::string user;
+			std::string group;
+			gKfsClient->GetUserAndGroupNames(attr->user, attr->group, user, group);
+			it = mUserNames.insert(std::make_pair(attr->user, user)).first;
+			mGroupNames[attr->group] = group;
+		}
+		user = it->second.c_str();
+	}
+
+	//group
+	const char *group;
+	if (attr->group == KFS::kKfsGroupNone) {
+		group = "group";
+	} else {
+		GroupNames::const_iterator it = mGroupNames.find(attr->group);
+		if (it == mGroupNames.end()) {
+			std::string user;
+			std::string group;
+			gKfsClient->GetUserAndGroupNames(attr->user, attr->group, user, group);
+			it = mGroupNames.insert(make_pair(attr->group, group)).first;
+			mUserNames[attr->user] = user;
+		}
+		group = it->second.c_str();
+	}
+
+	int iLineLen = sprintf(psLine, szListFile, (attr->isDirectory) ? 'd' : '-', perms.c_str(), user,
+			group, attr->fileSize, pszMonth[t->tm_mon], t->tm_mday, szYearOrHour, pszName,
+			(opt_F && attr->isDirectory ? "/" : ""));
 
 	return iLineLen;
 }
@@ -2444,9 +2479,8 @@ CFtpServer::CClientEntry::ListThread(void *pvParam) {
 		if (pTransfer->opt_d || !fileAttr.isDirectory) {
 
 			char *pszName = strrchr(pTransfer->szPath, '/');
-			iFileLineLen = pClient->GetFileListLine(psFileLine, fileAttr.mode, fileAttr.fileSize,
-					fileAttr.mtime.tv_sec, ((pszName && pszName[1]) ? pszName + 1 : "."),
-					pTransfer->opt_F);
+			iFileLineLen = pClient->GetFileListLine(psFileLine, &fileAttr,
+					((pszName && pszName[1]) ? pszName + 1 : "."), pTransfer->opt_F);
 
 			if (iFileLineLen > 0)
 				send(pTransfer->SockList, psFileLine, iFileLineLen,
@@ -2487,8 +2521,8 @@ CFtpServer::CClientEntry::ListThread(void *pvParam) {
 
 					} else if (fi->pszName[0] != '.' || pTransfer->opt_a) {
 
-						iFileLineLen = pClient->GetFileListLine(psFileLine, fi->mode, fi->size,
-								fi->mtime, fi->pszName, pTransfer->opt_F);
+						iFileLineLen = pClient->GetFileListLine(psFileLine, fi->fileAttr,
+								fi->pszName, pTransfer->opt_F);
 
 						if (!pClient->AddToListBuffer(pTransfer, psFileLine, iFileLineLen, pBuffer,
 								&nBufferPos, uiBufferSize))
@@ -2550,8 +2584,6 @@ bool CFtpServer::CEnumFileInfo::FindFirst(const char *pszPath) {
 			if (FindNext())
 				return true;
 		}
-		//OnServerEventCb (QFS_ERROR);	cout << "Readdir failed! " << KFS::ErrorCodeToStr(qres) << endl;
-
 	}
 	return false;
 }
@@ -2563,24 +2595,18 @@ bool CFtpServer::CEnumFileInfo::FindNext() {
 
 	//check size
 	if (qdir.size() > 0) {
-
-		it = qdir.begin(); //get item
-		KFS::KfsFileAttr fileattr = *it;
+		fileAttr = &qdir.back();
+		qdir.pop_back();
 
 		int iDirPathLen = strlen(szDirPath);
-		int iFileNameLen = strlen(fileattr.filename.c_str());
+		int iFileNameLen = strlen(fileAttr->filename.c_str());
 		if (iDirPathLen + iFileNameLen >= MAX_PATH)
 			return false;
 
 		sprintf(szFullPath, "%s%s%s", szDirPath, (szDirPath[iDirPathLen - 1] == '/') ? "" : "/",
-				fileattr.filename.c_str());
+				fileAttr->filename.c_str());
 		pszName = szFullPath + strlen(szDirPath) + ((szDirPath[iDirPathLen - 1] != '/') ? 1 : 0);
 
-		size = fileattr.fileSize;
-		mode = fileattr.mode;
-		mtime = fileattr.mtime.tv_sec;
-
-		qdir.erase(it); //remove
 		return true;
 	}
 
