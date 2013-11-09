@@ -62,15 +62,14 @@ CFtpServer::CFtpServer(void) {
 	bIsListening = bIsAccepting = false;
 	uiNumberOfUser = uiNumberOfClient = 0;
 
-	DataPortRange.usStart = 100; // TCP Ports [100;999].
+	DataPortRange.usStart = 10000; // TCP Ports [10000;999].
 	DataPortRange.usLen = 900;
 
 	ulNoTransferTimeout = ulNoLoginTimeout = 0; // No timeout.
 	uiCheckPassDelay = 0; // No pass delay.
 	uiMaxPasswordTries = 3; // 3 pass tries before the client gets kicked.
-
-	uiTransferBufferSize = 32 * 1024;
-	uiTransferSocketBufferSize = 64 * 1024;
+	uiTransferBufferSize = 32 * 1024; //32kB
+	uiTransferSocketBufferSize = 64 * 1024; //64kB
 
 	ListeningSock = INVALID_SOCKET;
 
@@ -595,6 +594,23 @@ CFtpServer::AddClient(SOCKET Sock, struct sockaddr_in *Sin) {
 			if (!pClient->gKfsClient) {
 				OnServerEventCb(QFS_CONNECT_ERROR);
 				return NULL;
+			}
+
+			//configure QFS
+			if (GetQFSMaxRetryPerOp() > 0) {
+				pClient->gKfsClient->SetMaxRetryPerOp(GetQFSMaxRetryPerOp());
+			}
+			if (GetQFSRetryDelay() > 0) {
+				pClient->gKfsClient->SetRetryDelay(GetQFSRetryDelay());
+			}
+			if (GetQFSDefaultIOTimeout() > 0) {
+				pClient->gKfsClient->SetDefaultIOTimeout(GetQFSDefaultIOTimeout());
+			}
+			if (GetQFSReadAheadBufferSize() >= 0) {
+				pClient->gKfsClient->SetDefaultReadAheadSize(GetQFSReadAheadBufferSize());
+			}
+			if (GetQFSWriteBufferSize() >= 0) {
+				pClient->gKfsClient->SetDefaultIoBufferSize(GetQFSWriteBufferSize());
 			}
 
 			OnClientEventCb(NEW_CLIENT, pClient);
@@ -2078,7 +2094,7 @@ CFtpServer::CClientEntry::StoreThread(void *pvParam)
 	} else
 		iflags |= O_TRUNC; //w|b
 
-	unsigned int uiBufferSize = pFtpServer->GetTransferBufferSize();
+	unsigned int uiBufferSize = pFtpServer->GetQFSWriteBufferSize();
 	char *pBuffer = new char[uiBufferSize];
 
 #ifdef CFTPSERVER_ENABLE_ZLIB
@@ -2103,7 +2119,11 @@ CFtpServer::CClientEntry::StoreThread(void *pvParam)
 		goto endofstore;
 	}
 #endif
-	hFile = pClient->gKfsClient->Open(pTransfer->szPath, iflags);
+	hFile = pClient->gKfsClient->Open(pTransfer->szPath, iflags,
+			pFtpServer->GetQFSReplicationNumReplicas(), pFtpServer->GetQFSReplicationNumStripes(),
+			pFtpServer->GetQFSReplicationNumRecoveryStripes(),
+			pFtpServer->GetQFSReplicationStripeSize(), pFtpServer->GetQFSReplicationStriperType(),
+			0666, KFS::kKfsSTierMax, KFS::kKfsSTierMax);
 
 	if (hFile >= 0) {
 		if ((pTransfer->RestartAt > 0
@@ -2179,8 +2199,8 @@ CFtpServer::CClientEntry::StoreThread(void *pvParam)
 				}
 			}
 		}
-		pClient->gKfsClient->Close(hFile);
 	}
+	pClient->gKfsClient->Close(hFile);
 
 	endofstore: if (pBuffer)
 		delete[] pBuffer;
@@ -2225,8 +2245,28 @@ CFtpServer::CClientEntry::RetrieveThread(void *pvParam)
 	int BlockSize = 0;
 	int len = 0;
 
-	unsigned int uiBufferSize = pFtpServer->GetTransferBufferSize();
-	char *pBuffer = new char[uiBufferSize];
+	unsigned int uiBufferSize = 0; //Init
+	char *pBuffer;
+
+	if (pFtpServer->GetQFSSkipHoles()) {
+		pClient->gKfsClient->SkipHolesInFile(hFile);
+	}
+
+	int theSize;
+	if (pFtpServer->GetQFSReadBufferSize() <= 0) {
+		theSize = pClient->gKfsClient->GetReadAheadSize(hFile);
+
+	} else {
+		theSize = pFtpServer->GetQFSReadBufferSize();
+	}
+	if (theSize <= 0) {
+		theSize = 1 << 20;
+	}
+	if (theSize != uiBufferSize || !pBuffer) {
+		delete[] pBuffer;
+		pBuffer = new char[theSize];
+		uiBufferSize = theSize;
+	}
 
 #ifdef CFTPSERVER_ENABLE_ZLIB
 	int nFlush, nRet;
@@ -2252,7 +2292,7 @@ CFtpServer::CClientEntry::RetrieveThread(void *pvParam)
 	}
 #endif
 
-	hFile = pClient->gKfsClient->Open(pTransfer->szPath, O_RDONLY | O_BINARY);
+	hFile = pClient->gKfsClient->Open(pTransfer->szPath, O_RDONLY);
 	if (hFile >= 0) {
 		if (pTransfer->RestartAt == 0
 				|| (pTransfer->RestartAt > 0
@@ -2300,8 +2340,8 @@ CFtpServer::CClientEntry::RetrieveThread(void *pvParam)
 				}
 			}
 		} // else Internal Error
-		pClient->gKfsClient->Close(hFile);
 	}
+	pClient->gKfsClient->Close(hFile);
 
 	endofretrieve: if (pBuffer)
 		delete[] pBuffer;

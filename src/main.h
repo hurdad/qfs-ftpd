@@ -23,6 +23,17 @@ struct config {
         std::string QFSMetaServerHost;
 		int QFSMetaServerPort;
 		std::string QFSRootPath;
+		int QFSMaxRetryPerOp;
+		int QFSRetryDelay;
+		int QFSDefaultIOTimeout;
+		int QFSReplicationStripeSize;
+		int QFSReplicationNumStripes;
+		int QFSReplicationNumRecoveryStripes;
+		int QFSReplicationNumReplicas;
+		bool QFSSkipHoles;
+		int QFSReadBufferSize;
+		int QFSWriteBufferSize;
+		int QFSReadAheadBufferSize;
 
         std::string LogDirectory;
         bool EnableUserLogging;

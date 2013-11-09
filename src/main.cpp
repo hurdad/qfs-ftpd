@@ -15,8 +15,7 @@ int main(int argc, char * argv[]) {
 
 	options_description desc("Options");
 	desc.add_options()("help", "Options related to the program.")("config,c",
-			value<string>(&config)->default_value("sample.cfg"),
-			"Configuration File");
+			value<string>(&config)->default_value("config/RS.sample.cfg"), "Configuration File");
 
 	variables_map vm;
 	try {
@@ -46,7 +45,17 @@ int main(int argc, char * argv[]) {
 	FtpServer.SetClientCallback(Log::OnClientEvent);
 
 	//set qfs connection
-	FtpServer.SetQFSConnectionConfig(server.QFSMetaServerHost, server.QFSMetaServerPort, server.QFSRootPath);
+	FtpServer.SetQFSConnectionConfig(server.QFSMetaServerHost, server.QFSMetaServerPort,
+			server.QFSRootPath, server.QFSMaxRetryPerOp, server.QFSRetryDelay,
+			server.QFSDefaultIOTimeout);
+
+	//set qfs write replication
+	FtpServer.SetQFSReplicationConfig(server.QFSReplicationStripeSize,
+			server.QFSReplicationNumStripes, server.QFSReplicationNumRecoveryStripes,
+			server.QFSReplicationNumReplicas, server.QFSWriteBufferSize);
+
+	//set qfs read config
+	FtpServer.SetQFSReadConfig(server.QFSSkipHoles, server.QFSReadBufferSize, server.QFSReadAheadBufferSize);
 
 	//configuration
 	FtpServer.SetMaxPasswordTries(server.MaxPasswordTries);
@@ -54,7 +63,7 @@ int main(int argc, char * argv[]) {
 	FtpServer.SetNoTransferTimeout(server.NoTransferTimeout); // seconds
 	FtpServer.SetDataPortRange(server.DataPortRange.usStart, server.DataPortRange.usLen); // data TCP-Port range = [100-999]
 	FtpServer.SetCheckPassDelay(server.CheckPassDelay); // milliseconds. Bruteforcing protection.
-	FtpServer.SetTransferBufferSize(server.TransferBufferSize);
+	FtpServer.SetTransferBufferSize(server.TransferBufferSize); //buffer for directory listing
 	FtpServer.SetTransferSocketBufferSize(server.TransferSocketBufferSize);
 	FtpServer.EnableFXP(server.EnableFXP);
 
@@ -69,19 +78,18 @@ int main(int argc, char * argv[]) {
 #endif
 
 	//Add anonymous user
-	CFtpServer::CUserEntry *pAnonymousUser = FtpServer.AddUser( "anonymous", NULL, "/" );
-	if( pAnonymousUser ) {
-		printf( "-Anonymous user successfully created.\r\n" );
+	CFtpServer::CUserEntry *pAnonymousUser = FtpServer.AddUser("anonymous", NULL, "/");
+	if (pAnonymousUser) {
+		printf("-Anonymous user successfully created.\r\n");
 		pAnonymousUser->SetPrivileges('?');
 	} else
-		printf( "-Can't create anonymous user.\r\n" );
+		printf("-Can't create anonymous user.\r\n");
 
 	//Start listening
-	if (FtpServer.StartListening(inet_addr(server.ListeningIP.c_str()),
-			server.ListeningPort)) {
+	if (FtpServer.StartListening(inet_addr(server.ListeningIP.c_str()), server.ListeningPort)) {
 
 		if (FtpServer.StartAccepting()) {
-			printf( "-Listening.\r\n" );
+			printf("-Listening.\r\n");
 
 			//loop
 			for (;;)

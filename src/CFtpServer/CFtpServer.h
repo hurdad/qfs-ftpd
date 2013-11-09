@@ -379,16 +379,61 @@ public:
 	////////////////////////////////////////
 
 	/**
-	 * Set the QFS Metaserver Host
+	 * Set the QFS Metaserver Connection Configuration
 	 *
-	 * @param  sHost   the hostname/ip address
-	 * @param  iPort   port number
-	 * @param  sRootPath   root path directory
+	 * @param  Host   the hostname/ip address
+	 * @param  Port   port number
+	 * @param  RootPath   root path directory
+	 * @param  MaxRetryPerOp   retry count
+	 * @param  RetryDelay   delay nanoseconds
+	 * @param  DefaultIOTimeout   timeout nanoseconds
 	 */
-	void SetQFSConnectionConfig(std::string sHost, int iPort, std::string sRootPath) {
-		QFSConfig.metaServerHost = sHost;
-		QFSConfig.metaServerPort = iPort;
-		QFSConfig.rootPath = sRootPath;
+	void SetQFSConnectionConfig(std::string Host, int Port, std::string RootPath, int MaxRetryPerOp,
+			int RetryDelay, int DefaultIOTimeout) {
+		QFSConfig.metaServerHost = Host;
+		QFSConfig.metaServerPort = Port;
+		QFSConfig.rootPath = RootPath;
+		QFSConfig.MaxRetryPerOp = MaxRetryPerOp;
+		QFSConfig.RetryDelay = RetryDelay;
+		QFSConfig.DefaultIOTimeout = DefaultIOTimeout;
+	}
+
+	/**
+	 * Set the QFS Replication Configuration
+	 *
+	 * @param  StripeSize
+	 * @param  NumStripes
+	 * @param  NumRecoverStripes
+	 * @param  NumReplicas
+	 * @param  WriteBufferSize
+	 */
+	void SetQFSReplicationConfig(int StripeSize, int NumStripes, int NumRecoveryStripes,
+			int NumReplicas, int WriteBufferSize) {
+
+		QFSConfig.Replication.StripeSize = StripeSize;
+		QFSConfig.Replication.NumStripes = NumStripes;
+		QFSConfig.Replication.NumRecoveryStripes = NumRecoveryStripes;
+		QFSConfig.Replication.NumReplicas = NumReplicas;
+		QFSConfig.WriteBufferSize = WriteBufferSize;
+
+		QFSConfig.Replication.StriperType = KFS::KFS_STRIPED_FILE_TYPE_NONE;
+		if (StripeSize > 0 || NumStripes > 0 || NumRecoveryStripes > 0) {
+			QFSConfig.Replication.StriperType = KFS::KFS_STRIPED_FILE_TYPE_RS;
+		}
+	}
+
+	/**
+	 * Set the QFS Replication Configuration
+	 *
+	 * @param  SkipHoles
+	 * @param  ReadBufferSize
+	 * @param  ReadAheadBufferSize
+	 */
+	void SetQFSReadConfig(bool SkipHoles, int ReadBufferSize, int ReadAheadBufferSize) {
+
+		QFSConfig.SkipHoles = SkipHoles;
+		QFSConfig.ReadBufferSize = ReadBufferSize;
+		QFSConfig.ReadAheadBufferSize = ReadAheadBufferSize;
 	}
 
 	/**
@@ -417,6 +462,115 @@ public:
 	std::string GetQFSRootPath() const {
 		return QFSConfig.rootPath;
 	}
+
+	/**
+	 * Get the QFS MaxRetryPerOp
+	 *
+	 * @return  max count
+	 */
+	int GetQFSMaxRetryPerOp() const {
+		return QFSConfig.MaxRetryPerOp;
+	}
+
+	/**
+	 * Get the QFS RetryDelay
+	 *
+	 * @return  delay nanosecond
+	 */
+	int GetQFSRetryDelay() const {
+		return QFSConfig.RetryDelay;
+	}
+
+	/**
+	 * Get the QFS DefaultIOTimeout
+	 *
+	 * @return  timeout nanosecond
+	 */
+	int GetQFSDefaultIOTimeout() const {
+		return QFSConfig.DefaultIOTimeout;
+	}
+
+	/**
+	 * Get the QFS Replication StripeSize
+	 *
+	 * @return  count
+	 */
+	int GetQFSReplicationStripeSize() const {
+		return QFSConfig.Replication.StripeSize;
+	}
+
+	/**
+	 * Get the QFS Replication NumStripes
+	 *
+	 * @return  count
+	 */
+	int GetQFSReplicationNumStripes() const {
+		return QFSConfig.Replication.NumStripes;
+	}
+
+	/**
+	 * Get the QFS Replication NumReplicas
+	 *
+	 * @return  count
+	 */
+	int GetQFSReplicationNumReplicas() const {
+		return QFSConfig.Replication.NumReplicas;
+	}
+
+	/**
+	 * Get the QFS Replication NumRecoveryStripes
+	 *
+	 * @return  count
+	 */
+	int GetQFSReplicationNumRecoveryStripes() const {
+		return QFSConfig.Replication.NumRecoveryStripes;
+	}
+
+	/**
+	 * Get the QFS Replication StriperType
+	 *
+	 * @return  count
+	 */
+	int GetQFSReplicationStriperType() const {
+		return QFSConfig.Replication.StriperType;
+	}
+
+	/**
+	 * Get the QFS WriteBufferSize
+	 *
+	 * @return  count
+	 */
+	int GetQFSWriteBufferSize() const {
+		return QFSConfig.WriteBufferSize;
+	}
+
+	/**
+	 * Get the QFS Replication ReadAheadBufferSize
+	 *
+	 * @return  count
+	 */
+	int GetQFSReadAheadBufferSize() const {
+		return QFSConfig.ReadAheadBufferSize;
+	}
+
+	/**
+	 * Get the QFS Replication SkipHoles
+	 *
+	 * @return  bool
+	 */
+	bool GetQFSSkipHoles() const {
+		return QFSConfig.SkipHoles;
+	}
+
+	/**
+	 * Get the QFS Replication ReadBufferSize
+	 *
+	 * @return  count
+	 */
+	bool GetQFSReadBufferSize() const {
+		return QFSConfig.ReadBufferSize;
+	}
+
 
 	////////////////////////////////////////
 	// STATISTICS
@@ -715,11 +869,25 @@ private:
 #endif
 	bool bEnableFXP;
 
-	// QFS Connection
+	// QFS Configuration
 	struct {
 		std::string metaServerHost;
 		unsigned short int metaServerPort;
 		std::string rootPath;
+		int MaxRetryPerOp;
+		int RetryDelay;
+		int DefaultIOTimeout;
+		int ReadAheadBufferSize;
+		struct {
+			int StripeSize;
+			int NumStripes;
+			int NumRecoveryStripes;
+			int NumReplicas;
+			int StriperType;
+		} Replication;
+		bool SkipHoles;
+		int ReadBufferSize;
+		int WriteBufferSize;
 	} QFSConfig;
 
 };
@@ -1170,7 +1338,7 @@ private:
 	typedef std::map<KFS::kfsUid_t, std::string> UserNames;
 	typedef std::map<KFS::kfsGid_t, std::string> GroupNames;
 
-	UserNames  mUserNames; //QFS Users
+	UserNames mUserNames; //QFS Users
 	GroupNames mGroupNames; //QFS Groups
 
 	/**
