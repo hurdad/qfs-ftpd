@@ -468,9 +468,9 @@ CFtpServer::AddUser(const char *pszLogin, const char *pszPass, const char *pszSt
 
 		//TODO
 		/*if (stat(pszSDEx, &st) != 0 || !S_ISDIR(st.st_mode)) {
-			free(pszSDEx);
-			return NULL;
-		}*/
+		 free(pszSDEx);
+		 return NULL;
+		 }*/
 
 		CFtpServer::CUserEntry *pUser = new CUserEntry;
 
@@ -1149,7 +1149,7 @@ CFtpServer::CClientEntry::Shell(void *pvParam) {
 			pszPath = pClient->BuildPath(pszArg);
 			if (pszPath && pClient->gKfsClient->Stat(pszPath, fileAttr) == 0) {
 				memcpy(&pClient->CurrentTransfer.szPath, pszPath, strlen(pszPath));
-				memcpy(&pClient->CurrentTransfer.fileAttr, &fileAttr, sizeof(fileAttr));
+				pClient->CurrentTransfer.fileAttr = &fileAttr;
 				if (nCmd == CMD_STAT) {
 					pClient->SendReply("213-Status follows:");
 					pClient->CurrentTransfer.SockList = pClient->CtrlSock;
@@ -1182,7 +1182,8 @@ CFtpServer::CClientEntry::Shell(void *pvParam) {
 			if (pszCmdArg) {
 				char *pszVirtualPath = NULL;
 				pszPath = pClient->BuildPath(pszCmdArg, &pszVirtualPath);
-				if (pszPath && pClient->gKfsClient->Stat(pszPath, fileAttr) == 0 && fileAttr.isDirectory) {
+				if (pszPath && pClient->gKfsClient->Stat(pszPath, fileAttr) == 0
+						&& fileAttr.isDirectory) {
 					strcpy(pClient->szWorkingDir, pszVirtualPath);
 					delete[] pszVirtualPath;
 					pClient->SendReply("250 CWD command successful.");
@@ -1198,7 +1199,8 @@ CFtpServer::CClientEntry::Shell(void *pvParam) {
 			if (pszCmdArg) {
 				pszPath = pClient->BuildPath(pszCmdArg);
 				struct tm *t;
-				if (pszPath && !pClient->gKfsClient->Stat(pszPath, fileAttr) && (t = gmtime((time_t *) &(fileAttr.mtime)))) {
+				if (pszPath && !pClient->gKfsClient->Stat(pszPath, fileAttr)
+						&& (t = gmtime((time_t *) &(fileAttr.mtime)))) {
 					pClient->SendReply2("213 %04d%02d%02d%02d%02d%02d", t->tm_year + 1900,
 							t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);
 				} else
@@ -1332,7 +1334,8 @@ CFtpServer::CClientEntry::Shell(void *pvParam) {
 		} else if (nCmd == CMD_SIZE) {
 			if (pszCmdArg) {
 				pszPath = pClient->BuildPath(pszCmdArg);
-				if (pszPath && pClient->gKfsClient->Stat(pszPath, fileAttr) == 0 && !fileAttr.isDirectory) {
+				if (pszPath && pClient->gKfsClient->Stat(pszPath, fileAttr) == 0
+						&& !fileAttr.isDirectory) {
 					pClient->SendReply2(
 #ifdef __USE_FILE_OFFSET64
 							"213 %llu",
@@ -1354,7 +1357,8 @@ CFtpServer::CClientEntry::Shell(void *pvParam) {
 			}
 			if (pszCmdArg) {
 				pszPath = pClient->BuildPath(pszCmdArg);
-				if (pszPath && pClient->gKfsClient->Stat(pszPath, fileAttr) == 0 && !fileAttr.isDirectory) {
+				if (pszPath && pClient->gKfsClient->Stat(pszPath, fileAttr) == 0
+						&& !fileAttr.isDirectory) {
 					if (pClient->gKfsClient->Remove(pszPath) != -1) {
 						pClient->SendReply("250 DELE command successful.");
 					} else
@@ -1387,7 +1391,9 @@ CFtpServer::CClientEntry::Shell(void *pvParam) {
 			if (pszCmdArg) {
 				if (pClient->szRenameFromPath) {
 					pszPath = pClient->BuildPath(pszCmdArg);
-					if (pszPath && pClient->gKfsClient->Rename(pClient->szRenameFromPath, pszPath) == 0) {
+					if (pszPath
+							&& pClient->gKfsClient->Rename(pClient->szRenameFromPath, pszPath)
+									== 0) {
 						pClient->SendReply("250 Rename successful.");
 					} else
 						pClient->SendReply("550 Rename failure.");
@@ -2100,7 +2106,8 @@ CFtpServer::CClientEntry::StoreThread(void *pvParam)
 	hFile = pClient->gKfsClient->Open(pTransfer->szPath, iflags);
 
 	if (hFile >= 0) {
-		if ((pTransfer->RestartAt > 0 && pClient->gKfsClient->Seek(hFile, pTransfer->RestartAt, SEEK_SET) != -1)
+		if ((pTransfer->RestartAt > 0
+				&& pClient->gKfsClient->Seek(hFile, pTransfer->RestartAt, SEEK_SET) != -1)
 				|| pTransfer->RestartAt == 0) {
 			fd_set fdRead;
 			char *ps = pBuffer;
@@ -2248,7 +2255,8 @@ CFtpServer::CClientEntry::RetrieveThread(void *pvParam)
 	hFile = pClient->gKfsClient->Open(pTransfer->szPath, O_RDONLY | O_BINARY);
 	if (hFile >= 0) {
 		if (pTransfer->RestartAt == 0
-				|| (pTransfer->RestartAt > 0 && pClient->gKfsClient->Seek(hFile, pTransfer->RestartAt, SEEK_SET) != -1)) {
+				|| (pTransfer->RestartAt > 0
+						&& pClient->gKfsClient->Seek(hFile, pTransfer->RestartAt, SEEK_SET) != -1)) {
 
 			while (pClient->DataSock != INVALID_SOCKET
 					&& (BlockSize = pClient->gKfsClient->Read(hFile, pBuffer, uiBufferSize)) >= 0) {
@@ -2347,7 +2355,7 @@ int CFtpServer::CClientEntry::GetFileListLine(char* psLine, unsigned short mode,
 #ifdef __USE_FILE_OFFSET64
 			"ll"
 #else
-			"l"
+					"l"
 #endif
 			"i %s %2d %s %s%s\r\n";
 
@@ -2426,7 +2434,7 @@ CFtpServer::CClientEntry::ListThread(void *pvParam) {
 	CFtpServer::CClientEntry *pClient = (CFtpServer::CClientEntry*) pvParam;
 	CFtpServer *pFtpServer = pClient->pFtpServer;
 	struct DataTransfer_t *pTransfer = &pClient->CurrentTransfer;
-	KFS::KfsFileAttr fileAttr = pTransfer->fileAttr;
+	KFS::KfsFileAttr fileAttr = *pTransfer->fileAttr;
 
 	int iFileLineLen = 0;
 	char *psFileLine = new char[ CFTPSERVER_LIST_MAX_LINE_LEN];
@@ -2437,7 +2445,8 @@ CFtpServer::CClientEntry::ListThread(void *pvParam) {
 
 			char *pszName = strrchr(pTransfer->szPath, '/');
 			iFileLineLen = pClient->GetFileListLine(psFileLine, fileAttr.mode, fileAttr.fileSize,
-					fileAttr.mtime.tv_sec, ((pszName && pszName[1]) ? pszName + 1 : "."), pTransfer->opt_F);
+					fileAttr.mtime.tv_sec, ((pszName && pszName[1]) ? pszName + 1 : "."),
+					pTransfer->opt_F);
 
 			if (iFileLineLen > 0)
 				send(pTransfer->SockList, psFileLine, iFileLineLen,

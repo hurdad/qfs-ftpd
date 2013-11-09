@@ -1067,7 +1067,7 @@ private:
 #else
 		int RestartAt;
 #endif
-		KFS::KfsFileAttr fileAttr;
+		KFS::KfsFileAttr *fileAttr;
 		int nCmd;
 		SOCKET SockList;
 		bool opt_a, opt_d, opt_F, opt_l;
