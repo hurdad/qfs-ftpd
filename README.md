@@ -9,7 +9,7 @@ Gettting Started
 ========
 ### Requirements:
 
-* qfs cluster installation
+* qfs cluster
 * qfs C++ client library
 
 ### Shared Library Requirements:
@@ -29,11 +29,10 @@ export LDFLAGS="-L/path/to/qfs/lib"
 export LD_LIBRARY_FLAGS=/path/to/qfs/lib
 ./configure
 make
-src/qfsconfig
+src/qfsconfig --config/R3.sample.cfg
 ```
 Configuration
 ========
-
 ```
 $ src/qfsftpd --help
 Options:
