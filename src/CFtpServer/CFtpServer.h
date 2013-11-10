@@ -383,16 +383,14 @@ public:
 	 *
 	 * @param  Host   the hostname/ip address
 	 * @param  Port   port number
-	 * @param  RootPath   root path directory
 	 * @param  MaxRetryPerOp   retry count
 	 * @param  RetryDelay   delay nanoseconds
 	 * @param  DefaultIOTimeout   timeout nanoseconds
 	 */
-	void SetQFSConnectionConfig(std::string Host, int Port, std::string RootPath, int MaxRetryPerOp,
-			int RetryDelay, int DefaultIOTimeout) {
-		QFSConfig.metaServerHost = Host;
-		QFSConfig.metaServerPort = Port;
-		QFSConfig.rootPath = RootPath;
+	void SetQFSConnectionConfig(std::string Host, int Port, int MaxRetryPerOp, int RetryDelay,
+			int DefaultIOTimeout) {
+		QFSConfig.MetaServerHost = Host;
+		QFSConfig.MetaServerPort = Port;
 		QFSConfig.MaxRetryPerOp = MaxRetryPerOp;
 		QFSConfig.RetryDelay = RetryDelay;
 		QFSConfig.DefaultIOTimeout = DefaultIOTimeout;
@@ -442,7 +440,7 @@ public:
 	 * @return  the hostname/ip address
 	 */
 	std::string GetQFSMetaServerHost() const {
-		return QFSConfig.metaServerHost;
+		return QFSConfig.MetaServerHost;
 	}
 
 	/**
@@ -451,16 +449,7 @@ public:
 	 * @return  the port number
 	 */
 	int GetQFSMetaServerPort() const {
-		return QFSConfig.metaServerPort;
-	}
-
-	/**
-	 * Get the QFS Root Path
-	 *
-	 * @return  the root directory path
-	 */
-	std::string GetQFSRootPath() const {
-		return QFSConfig.rootPath;
+		return QFSConfig.MetaServerPort;
 	}
 
 	/**
@@ -570,7 +559,6 @@ public:
 	bool GetQFSReadBufferSize() const {
 		return QFSConfig.ReadBufferSize;
 	}
-
 
 	////////////////////////////////////////
 	// STATISTICS
@@ -871,9 +859,8 @@ private:
 
 	// QFS Configuration
 	struct {
-		std::string metaServerHost;
-		unsigned short int metaServerPort;
-		std::string rootPath;
+		std::string MetaServerHost;
+		unsigned short int MetaServerPort;
 		int MaxRetryPerOp;
 		int RetryDelay;
 		int DefaultIOTimeout;

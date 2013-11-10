@@ -18,7 +18,6 @@ void InitServerConfig() {
 
 	server.QFSMetaServerHost = "127.0.0.1"; //QFS Cluster Metaserver Hostname
 	server.QFSMetaServerPort = 20000; // QFS Cluster Meteaserver Port
-	server.QFSRootPath = "/";  //QFS FTP Root Path
 	server.QFSMaxRetryPerOp = -1; //count
 	server.QFSRetryDelay = -1; //nsec
 	server.QFSDefaultIOTimeout = -1; //nsec
@@ -40,6 +39,7 @@ void InitServerConfig() {
 	server.NoTransferTimeout = 0; // No timeout.
 	server.TransferSocketBufferSize = 64 * 1024; //64kB
 	server.TransferBufferSize = 32 * 1024; //32kB
+
 	server.LogDirectory = "logs";
 	server.EnableUserLogging = false;
 	server.EnableClientLogging = true;
@@ -71,7 +71,6 @@ void LoadServerConfig(const char * configFile) {
 	int QFSMetaServerPort = server.QFSMetaServerPort;
 	cfg.lookupValue("QFS.MetaServerPort", QFSMetaServerPort);
 	server.QFSMetaServerPort = QFSMetaServerPort;
-	cfg.lookupValue("QFS.RootPath", server.QFSRootPath);
 
 	cfg.lookupValue("QFS.MaxRetryPerOp", server.QFSMaxRetryPerOp);
 	cfg.lookupValue("QFS.RetryDelay", server.QFSRetryDelay);
@@ -113,6 +112,17 @@ void LoadServerConfig(const char * configFile) {
 	cfg.lookupValue("TransferBufferSize", server.TransferBufferSize);
 	cfg.lookupValue("TransferSocketBufferSize", server.TransferSocketBufferSize);
 
+	Setting& Users = cfg.lookup("Users");
+	int UserCount = Users.getLength();
+	for (int i = 0; i < UserCount; i++) {
+		User newUser;
+		newUser.Username = string((const char *)Users[i]["Username"]);
+		newUser.Password = string((const char *)Users[i]["Password"]);
+		newUser.HomePath = string((const char *)Users[i]["HomePath"]);
+		int privs =  Users[i]["Privs"];
+		newUser.Privs = (unsigned char) privs <= 63 ? privs : 0;
+		server.Users.push_back((newUser));
+    }
 	cfg.lookupValue("LogDirectory", server.LogDirectory);
 	cfg.lookupValue("EnableUserLogging", server.EnableUserLogging);
 	cfg.lookupValue("EnableClientLogging", server.EnableClientLogging);

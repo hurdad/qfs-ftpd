@@ -15,7 +15,7 @@ int main(int argc, char * argv[]) {
 
 	options_description desc("Options");
 	desc.add_options()("help", "Options related to the program.")("config,c",
-			value<string>(&config)->default_value("config/RS.sample.cfg"), "Configuration File");
+			value<string>(&config)->default_value("config/R3.sample.cfg"), "Configuration File");
 
 	variables_map vm;
 	try {
@@ -46,8 +46,7 @@ int main(int argc, char * argv[]) {
 
 	//set qfs connection
 	FtpServer.SetQFSConnectionConfig(server.QFSMetaServerHost, server.QFSMetaServerPort,
-			server.QFSRootPath, server.QFSMaxRetryPerOp, server.QFSRetryDelay,
-			server.QFSDefaultIOTimeout);
+			server.QFSMaxRetryPerOp, server.QFSRetryDelay, server.QFSDefaultIOTimeout);
 
 	//set qfs write replication
 	FtpServer.SetQFSReplicationConfig(server.QFSReplicationStripeSize,
@@ -55,7 +54,8 @@ int main(int argc, char * argv[]) {
 			server.QFSReplicationNumReplicas, server.QFSWriteBufferSize);
 
 	//set qfs read config
-	FtpServer.SetQFSReadConfig(server.QFSSkipHoles, server.QFSReadBufferSize, server.QFSReadAheadBufferSize);
+	FtpServer.SetQFSReadConfig(server.QFSSkipHoles, server.QFSReadBufferSize,
+			server.QFSReadAheadBufferSize);
 
 	//configuration
 	FtpServer.SetMaxPasswordTries(server.MaxPasswordTries);
@@ -77,13 +77,15 @@ int main(int argc, char * argv[]) {
 	// the last command allow the user to call the 'system()' C function!
 #endif
 
-	//Add anonymous user
-	CFtpServer::CUserEntry *pAnonymousUser = FtpServer.AddUser("anonymous", NULL, "/");
-	if (pAnonymousUser) {
-		printf("-Anonymous user successfully created.\r\n");
-		pAnonymousUser->SetPrivileges('?');
-	} else
-		printf("-Can't create anonymous user.\r\n");
+	//Add Users From Config
+	CFtpServer::CUserEntry *pUser;
+	for (std::vector<User>::iterator it = server.Users.begin(); it != server.Users.end(); ++it) {
+		User myUser = (*it);
+		pUser = FtpServer.AddUser(myUser.Username.c_str(), myUser.Password.c_str(),
+				myUser.HomePath.c_str());
+		if (pUser)
+			pUser->SetPrivileges(myUser.Privs);
+	}
 
 	//Start listening
 	if (FtpServer.StartListening(inet_addr(server.ListeningIP.c_str()), server.ListeningPort)) {

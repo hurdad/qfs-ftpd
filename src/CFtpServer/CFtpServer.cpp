@@ -92,9 +92,8 @@ CFtpServer::CFtpServer(void) {
 #endif
 	bEnableFXP = false;
 
-	QFSConfig.metaServerHost = "localhost";
-	QFSConfig.metaServerPort = 20000;
-	QFSConfig.rootPath = "/";
+	QFSConfig.MetaServerHost = "127.0.0.1";
+	QFSConfig.MetaServerPort = 20000;
 
 	FtpServerLock.Initialize();
 	UserListLock.Initialize();
@@ -459,17 +458,11 @@ CFtpServer::AddUser(const char *pszLogin, const char *pszPass, const char *pszSt
 		if (bErr)
 			return NULL;
 
+		//Assuming that the Start Path exist in QFS
 		char *pszSDEx = strdup(pszStartDir);
 		if (!pszSDEx)
 			return NULL;
 		SimplifyPath(pszSDEx);
-		struct stat st; // Verify that the StartPath exist, and is a directory
-
-		//TODO
-		/*if (stat(pszSDEx, &st) != 0 || !S_ISDIR(st.st_mode)) {
-		 free(pszSDEx);
-		 return NULL;
-		 }*/
 
 		CFtpServer::CUserEntry *pUser = new CUserEntry;
 
@@ -1378,7 +1371,7 @@ CFtpServer::CClientEntry::Shell(void *pvParam) {
 					if (pClient->gKfsClient->Remove(pszPath) != -1) {
 						pClient->SendReply("250 DELE command successful.");
 					} else
-						pClient->SendReply("550 Can' t Remove or Access Error.");
+						pClient->SendReply("550 Can't Remove or Access Error.");
 				} else
 					pClient->SendReply("550 No such file.");
 			} else
