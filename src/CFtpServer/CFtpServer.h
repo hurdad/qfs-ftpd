@@ -39,6 +39,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <sstream>
 #include <fcntl.h>
 #include <stdarg.h>
 #include <sys/stat.h>
@@ -1378,4 +1379,4 @@ public:
 	QDIR qdir; //QFS Read Directory Plus Vector
 };
 
-#endif // #ifdef CFTPSERVER_H
+#endif // #ifdef CFTPSERVER_H

@@ -26,10 +26,10 @@ cd qfs-ftpd
 sh autogen.sh
 export CPPFLAGS="-I/path/to/qfs/include" 
 export LDFLAGS="-L/path/to/qfs/lib"
-export LD_LIBRARY_FLAGS=/path/to/qfs/lib
+export LD_LIBRARY_PATH=/path/to/qfs/lib
 ./configure
 make
-src/qfsconfig --config/R3.sample.cfg
+src/qfsftpd -c config/R3.sample.cfg
 ```
 Configuration
 ========
